@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2Arah Tech — MikroTik Dashboard</title>
+  <meta name="description" content="Real-time MikroTik RouterOS v7 Network Dashboard by 2Arah Tech" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+  <!-- GSAP CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            accent: '#3b82f6',
+            surface: '#0f1117',
+            card: '#161b27',
+            border: '#1e2534',
+            muted: '#8b9ab0',
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --accent: #3b82f6;
+      --accent-glow: rgba(59, 130, 246, 0.18);
+      --surface: #0f1117;
+      --card: #161b27;
+      --border: #1e2534;
+      --muted: #8b9ab0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      background: var(--surface);
+      color: #e2e8f0;
+      font-family: 'Inter', system-ui, sans-serif;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ─── Scrollbar ─── */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--surface);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 99px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--accent);
+    }
+
+    /* ─── Login overlay ─── */
+    #login-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: radial-gradient(ellipse at 50% 0%, rgba(59, 130, 246, 0.12) 0%, var(--surface) 70%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 400px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2.5rem;
+      box-shadow: 0 0 60px rgba(59, 130, 246, 0.08);
+    }
+
+    /* ─── Card styles ─── */
+    .dash-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      transition: border-color .25s, box-shadow .25s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .dash-card:hover {
+      border-color: rgba(59, 130, 246, 0.4);
+      box-shadow: 0 0 24px rgba(59, 130, 246, 0.08);
+    }
+
+    .dash-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0;
+      transition: opacity .3s;
+    }
+
+    .dash-card:hover::before {
+      opacity: 1;
+    }
+
+    /* ─── Stat badge ─── */
+    .stat-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--accent-glow);
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    /* ─── Live dot ─── */
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      background: #22c55e;
+      border-radius: 50%;
+      box-shadow: 0 0 6px #22c55e;
+      animation: pulse-dot 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.5;
+        transform: scale(.7);
+      }
+    }
+
+    /* ─── Progress bar ─── */
+    .progress-bar {
+      height: 6px;
+      border-radius: 99px;
+      background: var(--border);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 99px;
+      transition: width .6s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    /* ─── Table ─── */
+    .dash-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .dash-table th {
+      font-size: .7rem;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+
+    .dash-table td {
+      padding: 11px 14px;
+      font-size: .82rem;
+      border-bottom: 1px solid rgba(30, 37, 52, 0.5);
+      vertical-align: middle;
+    }
+
+    .dash-table tbody tr {
+      transition: background .15s;
+    }
+
+    .dash-table tbody tr:hover {
+      background: rgba(59, 130, 246, 0.04);
+    }
+
+    .dash-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* ─── Status pill ─── */
+    .status-up {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(34, 197, 94, 0.1);
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.2);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: .7rem;
+      font-weight: 600;
+    }
+
+    .status-down {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(239, 68, 68, 0.1);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: .7rem;
+      font-weight: 600;
+    }
+
+    /* ─── Input ─── */
+    .dash-input {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.65rem 1rem;
+      color: #e2e8f0;
+      width: 100%;
+      outline: none;
+      font-size: .9rem;
+      transition: border-color .2s, box-shadow .2s;
+    }
+
+    .dash-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
+    .dash-input::placeholder {
+      color: var(--muted);
+    }
+
+    /* ─── Button ─── */
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: .75rem 1.5rem;
+      font-weight: 600;
+      font-size: .9rem;
+      cursor: pointer;
+      width: 100%;
+      transition: background .2s, box-shadow .2s, transform .1s;
+      letter-spacing: .01em;
+    }
+
+    .btn-primary:hover {
+      background: #2563eb;
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.35);
+    }
+
+    .btn-primary:active {
+      transform: scale(.98);
+    }
+
+    .btn-primary:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    /* ─── Header ─── */
+    .topbar {
+      background: rgba(15, 17, 23, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    /* ─── Loader ─── */
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(59, 130, 246, 0.2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* ─── Error toast ─── */
+    #toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: #1e2534;
+      border: 1px solid #ef4444;
+      border-radius: 12px;
+      padding: .8rem 1.2rem;
+      color: #f87171;
+      font-size: .82rem;
+      font-weight: 500;
+      z-index: 200;
+      display: none;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+      max-width: 320px;
+    }
+
+    /* ─── Fade-in util ─── */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(18px);
+    }
+
+    /* ─── Logo SVG embed area ─── */
+    .logo-area img {
+      height: 32px;
+      width: auto;
+    }
+
+    .logo-fallback {
+      height: 32px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 768px) {
+      .login-card {
+        margin: 1rem;
+      }
+    }
+  </style>
+</head>
+
+<body class="dark bg-surface text-slate-200">
+
+  <!-- ════════════════════════════════════════════
+     LOGIN SCREEN
+════════════════════════════════════════════ -->
+  <div id="login-screen">
+    <div class="login-card fade-up" id="login-card">
+      <!-- Logo -->
+      <div class="flex items-center gap-3 mb-7">
+        <!-- 2Arah Tech Logo — actual PNG embedded (no bg), white on dark -->
+        <img
+          src="data:image/png;base64,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"
+          alt="2Arah Tech" style="height:60px;width:auto;filter:brightness(0) invert(1);" />
+      </div>
+
+      <h1 class="text-xl font-semibold text-white mb-1">MikroTik Dashboard</h1>
+      <p class="text-muted text-sm mb-6">Login dengan kredensial RouterOS Anda</p>
+
+      <div id="login-error"
+        class="hidden mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm"></div>
+
+      <form id="login-form" onsubmit="handleLogin(event)">
+        <div class="mb-4">
+          <label class="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">Username</label>
+          <input id="f-user" class="dash-input" type="text" placeholder="admin" value="admin" required
+            autocomplete="username" />
+        </div>
+        <div class="mb-6">
+          <label class="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">Password</label>
+          <input id="f-pass" class="dash-input" type="password" placeholder="••••••••" value="sum28827" required
+            autocomplete="current-password" />
+        </div>
+
+        <div class="flex items-center gap-2 mb-6">
+          <input id="f-save" type="checkbox" class="rounded" checked />
+          <label for="f-save" class="text-sm text-muted cursor-pointer">Simpan sesi di browser</label>
+        </div>
+
+        <button id="login-btn" class="btn-primary" type="submit">
+          <span id="login-label">Masuk ke Dashboard</span>
+          <span id="login-spinner" class="hidden"><span class="spinner"
+              style="width:16px;height:16px;border-width:2px;vertical-align:-3px;margin-right:6px;"></span>Menghubungkan…</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+     MAIN DASHBOARD
+════════════════════════════════════════════ -->
+  <div id="dashboard" class="hidden min-h-screen flex flex-col">
+
+    <!-- TOP BAR -->
+    <header class="topbar px-5 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <!-- 2Arah Tech Logo (header) — actual PNG embedded -->
+        <img
+          src="data:image/png;base64,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"
+          alt="2Arah Tech" style="height:30px;width:auto;filter:brightness(0) invert(1);" />
+        <div class="leading-4 hidden">
+          <div class="text-white font-bold text-sm">2Arah Tech</div>
+          <div class="text-muted text-xs">MikroTik Monitor</div>
+        </div>
+
+        <div class="ml-4 hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-border/60 text-xs text-muted">
+          <span id="header-host-label" class="text-accent font-mono font-semibold"></span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <!-- Live indicator -->
+        <div class="flex items-center gap-2">
+          <div class="live-dot"></div>
+          <span class="text-xs text-muted hidden sm:block">Live</span>
+        </div>
+
+        <!-- Last update -->
+        <div class="text-xs text-muted hidden sm:block">Diperbarui: <span id="last-update">--</span></div>
+
+        <!-- Refresh interval selector -->
+        <select id="interval-select" onchange="changeInterval()"
+          class="bg-card border border-border text-muted text-xs rounded-lg px-2 py-1.5 outline-none cursor-pointer">
+          <option value="2000">2s</option>
+          <option value="3000" selected>3s</option>
+          <option value="5000">5s</option>
+          <option value="10000">10s</option>
+        </select>
+
+        <button onclick="logout()"
+          class="text-xs px-3 py-1.5 rounded-lg border border-border text-muted hover:text-white hover:border-accent/50 transition-all">
+          Keluar
+        </button>
+      </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 px-4 sm:px-6 py-6 max-w-screen-2xl mx-auto w-full">
+
+      <!-- ── Row 1: Traffic Charts ── -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+
+        <!-- Download Chart -->
+        <div class="dash-card fade-up" id="card-rx">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <p class="text-muted text-xs font-semibold uppercase tracking-wider mb-1">Download (RX)</p>
+              <div class="flex items-end gap-2">
+                <span id="rx-current" class="text-3xl font-bold text-white">0</span>
+                <span id="rx-unit" class="text-base text-muted mb-1">Mbps</span>
+              </div>
+            </div>
+            <div class="flex flex-col items-end gap-2">
+              <div class="stat-badge">
+                <svg width="8" height="8">
+                  <circle cx="4" cy="4" r="4" fill="#22c55e" />
+                </svg>RX
+              </div>
+              <div class="text-xs text-muted">Peak: <span id="rx-peak" class="text-white font-semibold">0</span> <span
+                  id="rx-peak-unit">Mbps</span></div>
+            </div>
+          </div>
+          <div style="height:140px; position:relative;">
+            <canvas id="chart-rx"></canvas>
+          </div>
+          <div class="flex items-center gap-1 mt-3">
+            <div style="width:10px;height:2px;background:#3b82f6;border-radius:99px;"></div>
+            <span class="text-xs text-muted">Kecepatan Download Real-time</span>
+          </div>
+        </div>
+
+        <!-- Upload Chart -->
+        <div class="dash-card fade-up" id="card-tx">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <p class="text-muted text-xs font-semibold uppercase tracking-wider mb-1">Upload (TX)</p>
+              <div class="flex items-end gap-2">
+                <span id="tx-current" class="text-3xl font-bold text-white">0</span>
+                <span id="tx-unit" class="text-base text-muted mb-1">Mbps</span>
+              </div>
+            </div>
+            <div class="flex flex-col items-end gap-2">
+              <div class="stat-badge"
+                style="background:rgba(168,85,247,0.12);border-color:rgba(168,85,247,0.25);color:#c084fc;">
+                <svg width="8" height="8">
+                  <circle cx="4" cy="4" r="4" fill="#a855f7" />
+                </svg>TX
+              </div>
+              <div class="text-xs text-muted">Peak: <span id="tx-peak" class="text-white font-semibold">0</span> <span
+                  id="tx-peak-unit">Mbps</span></div>
+            </div>
+          </div>
+          <div style="height:140px; position:relative;">
+            <canvas id="chart-tx"></canvas>
+          </div>
+          <div class="flex items-center gap-1 mt-3">
+            <div style="width:10px;height:2px;background:#a855f7;border-radius:99px;"></div>
+            <span class="text-xs text-muted">Kecepatan Upload Real-time</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Row 2: System Status ── -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+
+        <!-- CPU -->
+        <div class="dash-card fade-up" id="card-cpu">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-muted text-xs font-semibold uppercase tracking-wider">CPU Load</span>
+            <svg class="text-accent" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+              stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
+            </svg>
+          </div>
+          <div class="flex items-end gap-1 mb-3">
+            <span id="cpu-val" class="text-4xl font-bold text-white">0</span>
+            <span class="text-xl text-muted mb-1">%</span>
+          </div>
+          <div class="progress-bar mb-2">
+            <div id="cpu-bar" class="progress-fill" style="width:0%;background:linear-gradient(90deg,#3b82f6,#60a5fa);">
+            </div>
+          </div>
+          <p class="text-xs text-muted">Beban prosesor saat ini</p>
+        </div>
+
+        <!-- Uptime -->
+        <div class="dash-card fade-up" id="card-uptime">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-muted text-xs font-semibold uppercase tracking-wider">Uptime</span>
+            <svg class="text-accent" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+              stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z" />
+            </svg>
+          </div>
+          <div class="text-2xl font-bold text-white mb-2" id="uptime-val">--</div>
+          <div class="flex gap-4 mt-1">
+            <div>
+              <div class="text-muted text-xs">Hari</div>
+              <div id="up-d" class="text-white font-semibold text-lg">0</div>
+            </div>
+            <div>
+              <div class="text-muted text-xs">Jam</div>
+              <div id="up-h" class="text-white font-semibold text-lg">0</div>
+            </div>
+            <div>
+              <div class="text-muted text-xs">Menit</div>
+              <div id="up-m" class="text-white font-semibold text-lg">0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Memory -->
+        <div class="dash-card fade-up" id="card-mem">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-muted text-xs font-semibold uppercase tracking-wider">Memory</span>
+            <svg class="text-accent" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+              stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M4 7v10M20 7v10M8 4h8a1 1 0 011 1v14a1 1 0 01-1 1H8a1 1 0 01-1-1V5a1 1 0 011-1zM8 10h8M8 14h8" />
+            </svg>
+          </div>
+          <div class="flex items-end gap-1 mb-3">
+            <span id="mem-used" class="text-3xl font-bold text-white">0</span>
+            <span class="text-muted mb-1 text-sm">MB / <span id="mem-total">0</span> MB</span>
+          </div>
+          <div class="progress-bar mb-2">
+            <div id="mem-bar" class="progress-fill" style="width:0%;background:linear-gradient(90deg,#8b5cf6,#a78bfa);">
+            </div>
+          </div>
+          <p class="text-xs text-muted">Memory Usage: <span id="mem-pct" class="text-white font-semibold">0%</span></p>
+        </div>
+      </div>
+
+      <!-- ── Row 3: Interface Table ── -->
+      <div class="dash-card fade-up" id="card-interfaces">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-white font-semibold text-base">Interface Aktif</h2>
+            <p class="text-muted text-xs mt-0.5">Daftar interface dan statistik traffic</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="iface-count" class="stat-badge">0 interface</span>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-border/40">
+          <table class="dash-table">
+            <thead>
+              <tr>
+                <th>Interface</th>
+                <th>Status</th>
+                <th>RX (↓)</th>
+                <th>TX (↑)</th>
+                <th>RX Bytes Total</th>
+                <th>TX Bytes Total</th>
+                <th>MAC Address</th>
+              </tr>
+            </thead>
+            <tbody id="iface-tbody">
+              <tr>
+                <td colspan="7" class="text-center text-muted py-8">
+                  <div class="flex items-center justify-center gap-2">
+                    <span class="spinner"></span> Memuat data interface…
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="mt-6 flex items-center justify-between text-xs text-muted pb-4">
+        <span>© 2026 <span class="text-accent font-semibold">2Arah Tech</span> — MikroTik Dashboard</span>
+        <span>RouterOS v7 REST API</span>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast">
+    ⚠ <span id="toast-msg">Error</span>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════════ -->
+  <script>
+    'use strict';
+
+    /* ════════════════════════════════════════════
+       MODE: DEMO (Dummy Data Simulator)
+       Ganti DEMO_MODE = false setelah deploy ke MikroTik
+       untuk mengaktifkan RouterOS REST API mode.
+    ════════════════════════════════════════════ */
+    const DEMO_MODE = false;
+    const API_HOST = '192.168.20.1'; // Hardcoded — diambil otomatis saat deploy
+
+    let API_USER = '';
+    let API_PASS = '';
+    let AUTH_HEADER = '';
+    let pollTimer = null;
+    let pollInterval = 3000;
+    let rxPeak = 0, txPeak = 0;
+    let prevRxBytes = {}, prevTxBytes = {};
+    let prevTimestamp = null;
+    const MAX_POINTS = 40;
+    const rxData = new Array(MAX_POINTS).fill(0);
+    const txData = new Array(MAX_POINTS).fill(0);
+
+    /* ─── Demo internal state ─── */
+    let _demoUptimeSec = 3 * 86400 + 7 * 3600 + 42 * 60 + 11; // 3d 7h 42m 11s
+    let _demoCpu = 18;
+    let _demoMemUsed = 38 * 1024 * 1024; // 38 MB
+    const _demoMemTotal = 64 * 1024 * 1024; // 64 MB
+    let _demoRxBps = 4.2e6;  // ~4.2 Mbps base
+    let _demoTxBps = 1.1e6;  // ~1.1 Mbps base
+    const _demoRxAccum = { 'ether1': 0, 'ether2': 0, 'bridge': 0 };
+    const _demoTxAccum = { 'ether1': 0, 'ether2': 0, 'bridge': 0 };
+    let _demoTick = 0;
+
+    const DEMO_IFACES = [
+      { name: 'ether1', type: 'ether', mac: 'D4:CA:6D:A1:2F:44', rxSplit: 0.65, txSplit: 0.55 },
+      { name: 'ether2', type: 'ether', mac: 'D4:CA:6D:A1:2F:45', rxSplit: 0.20, txSplit: 0.30 },
+      { name: 'bridge', type: 'bridge', mac: 'D4:CA:6D:A1:2F:46', rxSplit: 0.10, txSplit: 0.10 },
+      { name: 'wlan1', type: 'wlan', mac: 'D4:CA:6D:A1:2F:47', rxSplit: 0.05, txSplit: 0.05 },
+    ];
+
+    /* ─── Utility ─── */
+    function fmt(bytes) {
+      if (bytes === null || bytes === undefined || isNaN(bytes)) return '0 B';
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+      if (bytes < 1073741824) return (bytes / 1048576).toFixed(1) + ' MB';
+      return (bytes / 1073741824).toFixed(2) + ' GB';
+    }
+
+    function fmtRate(bps) {
+      if (bps < 1000) return { val: bps.toFixed(1), unit: 'bps' };
+      if (bps < 1e6) return { val: (bps / 1000).toFixed(1), unit: 'Kbps' };
+      if (bps < 1e9) return { val: (bps / 1e6).toFixed(2), unit: 'Mbps' };
+      return { val: (bps / 1e9).toFixed(2), unit: 'Gbps' };
+    }
+
+    function secToUptime(s) {
+      const d = Math.floor(s / 86400);
+      const h = Math.floor((s % 86400) / 3600);
+      const m = Math.floor((s % 3600) / 60);
+      const sc = s % 60;
+      return {
+        d, h, m, s: sc,
+        display: `${d}d ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sc).padStart(2, '0')}`
+      };
+    }
+
+    function nowLabel() {
+      return new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    function showToast(msg, dur = 4000) {
+      const t = document.getElementById('toast');
+      document.getElementById('toast-msg').textContent = msg;
+      t.style.display = 'block';
+      gsap.fromTo(t, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: .3 });
+      setTimeout(() => gsap.to(t, { opacity: 0, y: 8, duration: .3, onComplete: () => t.style.display = 'none' }), dur);
+    }
+
+    /* ─── AUTH ─── */
+    function buildAuth(user, pass) {
+      return 'Basic ' + btoa(unescape(encodeURIComponent(user + ':' + pass)));
+    }
+
+    /* ─── API FETCH (real mode) ─── */
+    async function apiFetch(path, options = {}) {
+      const host = window.location.hostname || API_HOST;
+      const url = `http://${host}${path}`;
+      const res = await fetch(url, {
+        ...options,
+        headers: { 'Authorization': AUTH_HEADER, 'Content-Type': 'application/json', ...options.headers },
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+      return res.json();
+    }
+
+    /* ════════════════════════════════════════════
+       DEMO DATA GENERATORS
+    ════════════════════════════════════════════ */
+    function demoJitter(base, pct = 0.25) {
+      // Smooth random walk with bounded jitter
+      return Math.max(0, base + base * pct * (Math.random() * 2 - 1));
+    }
+
+    function demoBurst() {
+      // Occasionally simulate a traffic spike
+      return _demoTick % 20 === 0 ? (Math.random() > 0.5 ? 3.5 : 1) : 1;
+    }
+
+    async function demoFetchTraffic() {
+      _demoTick++;
+      const burst = demoBurst();
+      _demoRxBps = Math.min(demoJitter(_demoRxBps, 0.18) * burst, 90e6);
+      _demoTxBps = Math.min(demoJitter(_demoTxBps, 0.18) * burst, 20e6);
+      updateTrafficUI(_demoRxBps, _demoTxBps);
+    }
+
+    async function demoFetchSystemResource() {
+      _demoUptimeSec += Math.round(pollInterval / 1000);
+      _demoCpu = Math.max(2, Math.min(95, _demoCpu + (Math.random() * 8 - 4)));
+      _demoMemUsed = Math.max(20 * 1024 * 1024, Math.min(60 * 1024 * 1024,
+        _demoMemUsed + (Math.random() * 2 - 1) * 512 * 1024));
+
+      const cpu = Math.round(_demoCpu);
+      const freeMemory = _demoMemTotal - _demoMemUsed;
+      const totalMemory = _demoMemTotal;
+      const usedMemory = _demoMemUsed;
+      const memPct = Math.round((usedMemory / totalMemory) * 100);
+      const up = secToUptime(_demoUptimeSec);
+
+      animateNumber('cpu-val', cpu);
+      gsap.to('#cpu-bar', { width: cpu + '%', duration: .6, ease: 'power2.out' });
+
+      document.getElementById('mem-used').textContent = Math.round(usedMemory / 1048576);
+      document.getElementById('mem-total').textContent = Math.round(totalMemory / 1048576);
+      document.getElementById('mem-pct').textContent = memPct + '%';
+      gsap.to('#mem-bar', { width: memPct + '%', duration: .6, ease: 'power2.out' });
+
+      const cpuColor = cpu > 80 ? 'linear-gradient(90deg,#ef4444,#f87171)' :
+        cpu > 50 ? 'linear-gradient(90deg,#f59e0b,#fbbf24)' :
+          'linear-gradient(90deg,#3b82f6,#60a5fa)';
+      document.getElementById('cpu-bar').style.background = cpuColor;
+
+      document.getElementById('uptime-val').textContent = up.display;
+      document.getElementById('up-d').textContent = up.d;
+      document.getElementById('up-h').textContent = up.h;
+      document.getElementById('up-m').textContent = up.m;
+    }
+
+    async function demoFetchInterfaces() {
+      const interval = pollInterval / 1000;
+      const tbody = document.getElementById('iface-tbody');
+      document.getElementById('iface-count').textContent = `${DEMO_IFACES.length} interface`;
+
+      const rows = DEMO_IFACES.map((iface, idx) => {
+        const ifRxBps = _demoRxBps * iface.rxSplit;
+        const ifTxBps = _demoTxBps * iface.txSplit;
+
+        // Accumulate bytes
+        _demoRxAccum[iface.name] = (_demoRxAccum[iface.name] || 0) + (ifRxBps / 8) * interval;
+        _demoTxAccum[iface.name] = (_demoTxAccum[iface.name] || 0) + (ifTxBps / 8) * interval;
+        // Add realistic baseline that was there before
+        const baseRx = [4.8e9, 1.2e9, 220e6, 85e6][idx] || 0;
+        const baseTx = [1.1e9, 300e6, 90e6, 40e6][idx] || 0;
+
+        const rxBytes = baseRx + _demoRxAccum[iface.name];
+        const txBytes = baseTx + _demoTxAccum[iface.name];
+
+        const rxR = fmtRate(ifRxBps);
+        const txR = fmtRate(ifTxBps);
+        const rxRate = `<span class="text-accent font-mono">${rxR.val} ${rxR.unit}</span>`;
+        const txRate = `<span class="text-purple-400 font-mono">${txR.val} ${txR.unit}</span>`;
+
+        const status = `<span class="status-up"><span style="width:5px;height:5px;background:#22c55e;border-radius:50%;display:inline-block;"></span>UP</span>`;
+
+        return `<tr>
+      <td>
+        <div class="flex items-center gap-2">
+          <div style="width:8px;height:8px;border-radius:2px;background:${typeColor(iface.type)};flex-shrink:0;"></div>
+          <div>
+            <div class="text-white font-medium">${iface.name}</div>
+            <div class="text-muted text-xs">${iface.type}</div>
+          </div>
+        </div>
+      </td>
+      <td>${status}</td>
+      <td>${rxRate}</td>
+      <td>${txRate}</td>
+      <td class="font-mono text-slate-400 text-xs">${fmt(rxBytes)}</td>
+      <td class="font-mono text-slate-400 text-xs">${fmt(txBytes)}</td>
+      <td class="font-mono text-muted text-xs">${iface.mac}</td>
+    </tr>`;
+      }).join('');
+
+      tbody.innerHTML = rows;
+    }
+
+    /* ════════════════════════════════════════════
+       REAL API FUNCTIONS (aktif saat DEMO_MODE=false)
+    ════════════════════════════════════════════ */
+    async function realFetchTraffic() {
+      const ifaces = await apiFetch('/rest/interface?running=true');
+      const names = ifaces.map(i => i.name).join(',');
+      if (!names) return;
+      const data = await apiFetch('/rest/interface/monitor-traffic', {
+        method: 'POST',
+        body: JSON.stringify({ interface: names, duration: '1s', 'once': '' }),
+      });
+      let totalRx = 0, totalTx = 0;
+      if (Array.isArray(data)) {
+        data.forEach(entry => {
+          totalRx += parseInt(entry['rx-bits-per-second'] || 0);
+          totalTx += parseInt(entry['tx-bits-per-second'] || 0);
+        });
+      }
+      updateTrafficUI(totalRx, totalTx);
+    }
+
+    async function realFetchSystemResource() {
+      const r = await apiFetch('/rest/system/resource');
+      const cpu = parseInt(r['cpu-load'] || 0);
+      const freeMemory = parseInt(r['free-memory'] || 0);
+      const totalMemory = parseInt(r['total-memory'] || 1);
+      const usedMemory = totalMemory - freeMemory;
+      const memPct = Math.round((usedMemory / totalMemory) * 100);
+      // Parse RouterOS uptime string e.g. "3d7h42m11s"
+      const uStr = r['uptime'] || '';
+      let d = 0, h = 0, m = 0, s = 0;
+      const wk = uStr.match(/(\d+)w/); if (wk) d += +wk[1] * 7;
+      const dy = uStr.match(/(\d+)d/); if (dy) d += +dy[1];
+      const hr = uStr.match(/(\d+)h/); if (hr) h = +hr[1];
+      const mn = uStr.match(/(\d+)m/); if (mn) m = +mn[1];
+      const sc = uStr.match(/(\d+)s/); if (sc) s = +sc[1];
+      const up = { d, h, m, s, display: `${d}d ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` };
+
+      animateNumber('cpu-val', cpu);
+      gsap.to('#cpu-bar', { width: cpu + '%', duration: .6, ease: 'power2.out' });
+      document.getElementById('mem-used').textContent = Math.round(usedMemory / 1048576);
+      document.getElementById('mem-total').textContent = Math.round(totalMemory / 1048576);
+      document.getElementById('mem-pct').textContent = memPct + '%';
+      gsap.to('#mem-bar', { width: memPct + '%', duration: .6, ease: 'power2.out' });
+      const cpuColor = cpu > 80 ? 'linear-gradient(90deg,#ef4444,#f87171)' :
+        cpu > 50 ? 'linear-gradient(90deg,#f59e0b,#fbbf24)' :
+          'linear-gradient(90deg,#3b82f6,#60a5fa)';
+      document.getElementById('cpu-bar').style.background = cpuColor;
+      document.getElementById('uptime-val').textContent = up.display;
+      document.getElementById('up-d').textContent = up.d;
+      document.getElementById('up-h').textContent = up.h;
+      document.getElementById('up-m').textContent = up.m;
+    }
+
+    async function realFetchInterfaces() {
+      const [ifaces, stats] = await Promise.all([
+        apiFetch('/rest/interface'),
+        apiFetch('/rest/interface/print?stats=true').catch(() => []),
+      ]);
+      const statsMap = {};
+      if (Array.isArray(stats)) stats.forEach(s => { statsMap[s.name] = s; });
+      const active = ifaces.filter(i => i.running === true || i.running === 'true');
+      document.getElementById('iface-count').textContent = `${active.length} interface`;
+      const tbody = document.getElementById('iface-tbody');
+      if (active.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-8">Tidak ada interface yang aktif</td></tr>`;
+        return;
+      }
+      const rows = active.map(iface => {
+        const s = statsMap[iface.name] || iface;
+        const rxBytes = parseInt(s['rx-byte'] || 0);
+        const txBytes = parseInt(s['tx-byte'] || 0);
+        const now = Date.now();
+        let rxRate = '<span class="text-muted">—</span>', txRate = '<span class="text-muted">—</span>';
+        if (prevRxBytes[iface.name] !== undefined && prevTimestamp) {
+          const dt = (now - prevTimestamp) / 1000;
+          if (dt > 0) {
+            const rxR = fmtRate(((rxBytes - prevRxBytes[iface.name]) / dt) * 8);
+            const txR = fmtRate(((txBytes - prevTxBytes[iface.name]) / dt) * 8);
+            rxRate = `<span class="text-accent font-mono">${rxR.val} ${rxR.unit}</span>`;
+            txRate = `<span class="text-purple-400 font-mono">${txR.val} ${txR.unit}</span>`;
+          }
+        }
+        prevRxBytes[iface.name] = rxBytes;
+        prevTxBytes[iface.name] = txBytes;
+        const mac = iface['mac-address'] || '—';
+        const status = `<span class="status-up"><span style="width:5px;height:5px;background:#22c55e;border-radius:50%;display:inline-block;"></span>UP</span>`;
+        return `<tr><td><div class="flex items-center gap-2"><div style="width:8px;height:8px;border-radius:2px;background:${typeColor(iface.type)};flex-shrink:0;"></div><div><div class="text-white font-medium">${iface.name}</div><div class="text-muted text-xs">${iface.type || 'ether'}</div></div></div></td><td>${status}</td><td>${rxRate}</td><td>${txRate}</td><td class="font-mono text-slate-400 text-xs">${fmt(rxBytes)}</td><td class="font-mono text-slate-400 text-xs">${fmt(txBytes)}</td><td class="font-mono text-muted text-xs">${mac}</td></tr>`;
+      }).join('');
+      tbody.innerHTML = rows;
+      prevTimestamp = Date.now();
+    }
+
+    /* ─── Shared UI update (traffic) ─── */
+    function updateTrafficUI(rxBps, txBps) {
+      const rx = fmtRate(rxBps);
+      const tx = fmtRate(txBps);
+      document.getElementById('rx-current').textContent = rx.val;
+      document.getElementById('rx-unit').textContent = rx.unit;
+      document.getElementById('tx-current').textContent = tx.val;
+      document.getElementById('tx-unit').textContent = tx.unit;
+      if (rxBps > rxPeak) {
+        rxPeak = rxBps;
+        const p = fmtRate(rxPeak);
+        document.getElementById('rx-peak').textContent = p.val;
+        document.getElementById('rx-peak-unit').textContent = p.unit;
+      }
+      if (txBps > txPeak) {
+        txPeak = txBps;
+        const p = fmtRate(txPeak);
+        document.getElementById('tx-peak').textContent = p.val;
+        document.getElementById('tx-peak-unit').textContent = p.unit;
+      }
+      pushChartData(rxBps, txBps);
+    }
+
+    function animateNumber(id, target) {
+      const el = document.getElementById(id);
+      const current = parseFloat(el.textContent) || 0;
+      gsap.to({ val: current }, {
+        val: target, duration: .5, ease: 'power2.out',
+        onUpdate: function () { el.textContent = Math.round(this.targets()[0].val); }
+      });
+    }
+
+    function typeColor(type) {
+      const map = { 'ether': '#3b82f6', 'wlan': '#22c55e', 'bridge': '#f59e0b', 'vlan': '#a855f7', 'pppoe': '#06b6d4', 'lte': '#ec4899', 'loopback': '#64748b' };
+      return map[(type || '').toLowerCase()] || '#3b82f6';
+    }
+
+    /* ─── CHARTS ─── */
+    let chartRx, chartTx;
+    const LABELS = Array.from({ length: MAX_POINTS }, () => '');
+
+    function chartConfig(color, data) {
+      return {
+        type: 'line',
+        data: {
+          labels: LABELS.slice(),
+          datasets: [{
+            data: data.slice(), borderColor: color,
+            backgroundColor: color.replace('rgb', 'rgba').replace(')', ',0.08)'),
+            borderWidth: 2, pointRadius: 0, tension: 0.45, fill: true
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, animation: { duration: 0 },
+          plugins: {
+            legend: { display: false }, tooltip: {
+              mode: 'index', intersect: false, backgroundColor: '#1e2534',
+              titleColor: '#8b9ab0', bodyColor: '#e2e8f0', borderColor: '#2d3748', borderWidth: 1,
+              callbacks: { label: ctx => { const f = fmtRate(ctx.raw); return ` ${f.val} ${f.unit}`; } }
+            }
+          },
+          scales: {
+            x: { display: false },
+            y: {
+              display: true, min: 0,
+              grid: { color: 'rgba(255,255,255,0.04)', drawBorder: false },
+              ticks: {
+                color: '#8b9ab0', font: { size: 10 }, maxTicksLimit: 4,
+                callback: v => { const f = fmtRate(v); return f.val + ' ' + f.unit; }
+              },
+              border: { display: false }
+            }
+          },
+          interaction: { mode: 'nearest', axis: 'x', intersect: false },
+        }
+      };
+    }
+
+    function initCharts() {
+      chartRx = new Chart(document.getElementById('chart-rx').getContext('2d'), chartConfig('rgb(59,130,246)', rxData));
+      chartTx = new Chart(document.getElementById('chart-tx').getContext('2d'), chartConfig('rgb(168,85,247)', txData));
+    }
+
+    function pushChartData(rxBps, txBps) {
+      rxData.push(rxBps); rxData.shift();
+      txData.push(txBps); txData.shift();
+      chartRx.data.datasets[0].data = rxData.slice();
+      chartTx.data.datasets[0].data = txData.slice();
+      const rxMax = Math.max(...rxData) * 1.2 || 1;
+      const txMax = Math.max(...txData) * 1.2 || 1;
+      chartRx.options.scales.y.max = rxMax;
+      chartTx.options.scales.y.max = txMax;
+      chartRx.update('none');
+      chartTx.update('none');
+    }
+
+    /* ─── POLLING ─── */
+    function changeInterval() {
+      pollInterval = parseInt(document.getElementById('interval-select').value);
+      clearInterval(pollTimer);
+      startPolling();
+    }
+
+    function startPolling() {
+      fetchAll();
+      pollTimer = setInterval(fetchAll, pollInterval);
+    }
+
+    async function fetchAll() {
+      try {
+        if (DEMO_MODE) {
+          await Promise.all([demoFetchTraffic(), demoFetchSystemResource(), demoFetchInterfaces()]);
+        } else {
+          await Promise.all([realFetchTraffic(), realFetchSystemResource(), realFetchInterfaces()]);
+        }
+        document.getElementById('last-update').textContent = nowLabel();
+      } catch (ex) {
+        showToast('Error: ' + ex.message);
+      }
+    }
+
+    /* ─── LOGIN ─── */
+    async function handleLogin(e) {
+      e.preventDefault();
+      const user = document.getElementById('f-user').value.trim();
+      const pass = document.getElementById('f-pass').value;
+      const save = document.getElementById('f-save').checked;
+
+      const lbl = document.getElementById('login-label');
+      const spn = document.getElementById('login-spinner');
+      const btn = document.getElementById('login-btn');
+      const err = document.getElementById('login-error');
+
+      lbl.classList.add('hidden');
+      spn.classList.remove('hidden');
+      btn.disabled = true;
+      err.classList.add('hidden');
+
+      // Simulate brief connection delay for UX
+      await new Promise(r => setTimeout(r, DEMO_MODE ? 600 : 1200));
+
+      if (DEMO_MODE) {
+        // Demo mode: accept any non-empty credentials
+        if (!user || !pass) {
+          err.textContent = 'Username dan password tidak boleh kosong.';
+          err.classList.remove('hidden');
+          lbl.classList.remove('hidden'); spn.classList.add('hidden'); btn.disabled = false;
+          return;
+        }
+        API_USER = user; API_PASS = pass;
+        if (save) { localStorage.setItem('mt_user', user); localStorage.setItem('mt_pass', pass); }
+        showDashboard();
+      } else {
+        try {
+          API_USER = user; API_PASS = pass;
+          AUTH_HEADER = buildAuth(user, pass);
+          await apiFetch('/rest/system/resource');
+          if (save) { localStorage.setItem('mt_user', user); localStorage.setItem('mt_pass', pass); }
+          showDashboard();
+        } catch (ex) {
+          err.textContent = `Gagal terhubung ke ${API_HOST}: ${ex.message}.`;
+          err.classList.remove('hidden');
+          gsap.fromTo(err, { x: -6 }, { x: 0, duration: .4, ease: 'elastic.out(1,0.5)' });
+          lbl.classList.remove('hidden'); spn.classList.add('hidden'); btn.disabled = false;
+        }
+      }
+
+      lbl.classList.remove('hidden');
+      spn.classList.add('hidden');
+      btn.disabled = false;
+    }
+
+    function logout() {
+      clearInterval(pollTimer);
+      localStorage.removeItem('mt_user');
+      localStorage.removeItem('mt_pass');
+      gsap.to('#dashboard', {
+        opacity: 0, duration: .3, onComplete: () => {
+          document.getElementById('dashboard').classList.add('hidden');
+          document.getElementById('login-screen').style.display = 'flex';
+          gsap.fromTo('#login-card', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: .4 });
+        }
+      });
+    }
+
+    function showDashboard() {
+      document.getElementById('header-host-label').textContent = DEMO_MODE ? '192.168.20.1 (Demo)' : API_HOST;
+      const ls = document.getElementById('login-screen');
+      const dash = document.getElementById('dashboard');
+      gsap.to(ls, {
+        opacity: 0, duration: .35, onComplete: () => {
+          ls.style.display = 'none';
+          dash.classList.remove('hidden');
+          gsap.from('#dashboard', { opacity: 0, duration: .4 });
+          gsap.to('.fade-up', { opacity: 1, y: 0, duration: .55, ease: 'power3.out', stagger: .08, delay: .1 });
+          initCharts();
+          startPolling();
+        }
+      });
+    }
+
+    /* ─── INIT ─── */
+    (function init() {
+      gsap.to('#login-card', { opacity: 1, y: 0, duration: .6, ease: 'power3.out', delay: .1 });
+
+      const savedUser = localStorage.getItem('mt_user');
+      const savedPass = localStorage.getItem('mt_pass');
+      if (savedUser) document.getElementById('f-user').value = savedUser;
+      if (savedPass) document.getElementById('f-pass').value = savedPass;
+
+      if (DEMO_MODE && savedUser && savedPass) {
+        // Auto-enter demo dashboard if creds saved
+        API_USER = savedUser; API_PASS = savedPass;
+        setTimeout(showDashboard, 400);
+      } else if (!DEMO_MODE && savedUser && savedPass) {
+        API_USER = savedUser; API_PASS = savedPass;
+        AUTH_HEADER = buildAuth(savedUser, savedPass);
+        apiFetch('/rest/system/resource').then(showDashboard).catch(() => { });
+      }
+    })();
+  </script>
+</body>
+
+</html>

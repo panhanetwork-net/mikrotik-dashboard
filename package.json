@@ -1,0 +1,21 @@
+{
+  "name": "mikrotik-dashboard",
+  "version": "2.0.0",
+  "description": "2Arah Tech — MikroTik RouterOS v7 Dashboard",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev":   "node --watch server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "memorystore": "^1.6.7",
+    "node-fetch": "^2.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Koneksi Aktif — 2Arah Tech MikroTik</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="/js/connections.js" defer></script>
+</head>
+<body>
+
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="data:image/png;base64,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" alt="2Arah Tech" />
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Monitor</div>
+      <a href="/dashboard" class="nav-item">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </a>
+      <a href="/dhcp" class="nav-item">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6M9 16h6M7 4H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2h-2M9 4a2 2 0 014 0"/></svg>
+        DHCP Leases
+      </a>
+      <a href="/connections" class="nav-item active">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        Koneksi Aktif
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <button onclick="doLogout()" class="btn-secondary" style="justify-content:flex-start;gap:8px;display:flex;align-items:center;">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        Keluar
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT AREA -->
+  <div class="content-wrap">
+
+    <header class="topbar px-5 py-3" style="display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <h1 style="font-size:.95rem;font-weight:600;color:#fff;">Koneksi Aktif</h1>
+        <p style="font-size:.72rem;color:var(--muted);margin-top:1px;">Active firewall connections — IP, MAC, hostname, port usage</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <input type="text" id="search-conn" class="search-input" placeholder="Cari IP, port, protokol…" oninput="filterConnections()" />
+        <button onclick="loadConnections()" class="btn-secondary">↻ Refresh</button>
+      </div>
+    </header>
+
+    <main style="padding:24px;">
+
+      <!-- Summary stats -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:20px;">
+        <div class="dash-card fade-up">
+          <p style="font-size:.68rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Total Koneksi</p>
+          <span id="conn-total" style="font-size:2rem;font-weight:700;color:#fff;">0</span>
+        </div>
+        <div class="dash-card fade-up">
+          <p style="font-size:.68rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Established</p>
+          <span id="conn-established" style="font-size:2rem;font-weight:700;color:#22c55e;">0</span>
+        </div>
+        <div class="dash-card fade-up">
+          <p style="font-size:.68rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Unique Src IPs</p>
+          <span id="conn-src-ips" style="font-size:2rem;font-weight:700;color:#3b82f6;">0</span>
+        </div>
+        <div class="dash-card fade-up">
+          <p style="font-size:.68rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Unique Dst Ports</p>
+          <span id="conn-dst-ports" style="font-size:2rem;font-weight:700;color:#a855f7;">0</span>
+        </div>
+      </div>
+
+      <!-- Top connections by port -->
+      <div class="dash-card fade-up" style="margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <div>
+            <h2 style="color:#fff;font-weight:600;font-size:.9rem;">🔝 Top Connections by Destination Port</h2>
+            <p style="color:var(--muted);font-size:.72rem;margin-top:2px;">Port mana yang paling banyak menerima koneksi</p>
+          </div>
+        </div>
+        <div id="top-ports-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+
+      <!-- Top source IPs by connection count -->
+      <div class="dash-card fade-up" style="margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <div>
+            <h2 style="color:#fff;font-weight:600;font-size:.9rem;">🌐 Top Source IPs</h2>
+            <p style="color:var(--muted);font-size:.72rem;margin-top:2px;">IP mana yang paling banyak membuka koneksi</p>
+          </div>
+        </div>
+        <div id="top-ips-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+
+      <!-- All Connections Table -->
+      <div class="dash-card fade-up">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <div>
+            <h2 style="color:#fff;font-weight:600;font-size:.9rem;">Semua Koneksi</h2>
+          </div>
+          <span id="conn-count" class="stat-badge">0 koneksi</span>
+        </div>
+        <div style="overflow-x:auto;border-radius:12px;border:1px solid rgba(30,37,52,.5);">
+          <table class="dash-table">
+            <thead>
+              <tr>
+                <th>Protokol</th>
+                <th>Src Address</th>
+                <th>Src Port</th>
+                <th>Dst Address</th>
+                <th>Dst Port</th>
+                <th>State</th>
+                <th>Bytes (↕)</th>
+              </tr>
+            </thead>
+            <tbody id="conn-tbody">
+              <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:40px;">
+                <span class="spinner"></span> Memuat koneksi aktif…
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div style="margin-top:20px;font-size:.72rem;color:var(--muted);">© 2026 <span style="color:#3b82f6;font-weight:600;">2Arah Tech</span> — MikroTik Dashboard v3</div>
+    </main>
+  </div>
+</div>
+
+<div id="toast">⚠ <span id="toast-msg">Error</span></div>
+
+</body>
+</html>
