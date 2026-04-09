@@ -144,8 +144,21 @@ async function trafficSnapshot() {
         '=once=',
       ]).catch(e => ({ error: e }));
 
-      // NOTE: User requested to temporarily disable LACP polling to .50 due to firewall/hotspot blocks
-      const pBrs = Promise.resolve({ disabled: true });
+      // The user requested LACP polling to .42 x86
+      const brsHost = process.env.BRS_HOST || '157.66.36.42';
+      const brsApiPort = parseInt(process.env.BRS_API_PORT || '8233');
+      const brsUser = process.env.BRS_USER || process.env.MIKROTIK_USER || 'admin';
+      const brsPass = process.env.BRS_PASS || process.env.MIKROTIK_PASS || 'PNS321';
+
+      const pBrs = runCommand(brsHost, brsApiPort, brsUser, brsPass, '/interface/print').then(swIfaces => {
+        if (!Array.isArray(swIfaces)) return [];
+        const running = swIfaces.filter(i => i.running === 'true').map(i => i.name).slice(0, 50);
+        if(!running.length) return [];
+        return runCommand(brsHost, brsApiPort, brsUser, brsPass, '/interface/monitor-traffic', [
+            `=interface=${running.join(',')}`,
+            '=once=',
+          ]).catch(e => ({ error: e }));
+      }).catch(e => ({ error: e }));
 
       const swHost = process.env.SW_HOST || '192.20.40.2';
       const swApiPort = parseInt(process.env.SW_API_PORT || '8728');
