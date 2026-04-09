@@ -251,11 +251,6 @@ function initCharts() {
       ]
     }
   });
-
-  chartSfp  = initDual('chart-sfp',  'rgb(56, 189, 248)', 'rgb(244, 114, 182)', historySfpRx, historySfpTx);
-  chartLacp = initDual('chart-lacp', 'rgb(251, 191, 36)', 'rgb(251, 113, 133)', historyLacpRx, historyLacpTx);
-  chartArah = initDual('chart-arah', 'rgb(74, 222, 128)', 'rgb(192, 132, 252)', historyArahRx, historyArahTx);
-  
   chartDns = new Chart(document.getElementById('chart-dns'), {
     ...getDualChartConfig(),
     data: {
