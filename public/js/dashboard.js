@@ -1120,20 +1120,23 @@ async function fetchSnmpDevices() {
     const devices = await fetch('/api/snmp/devices').then(r => r.json());
     snmpDevices = Array.isArray(devices) ? devices : [];
 
-    // Populate device select (with placeholder, wait for user click to load interfaces)
+    // Populate device select (no placeholder — auto-select first)
     const sel = document.getElementById('snmp-device-select');
     if (sel) {
       const prevKey = sel.value;
-      sel.innerHTML = '<option value="">-- Pilih Perangkat --</option>';
+      sel.innerHTML = '';
       snmpDevices.forEach(d => {
         const opt = document.createElement('option');
         opt.value = d.key;
         opt.textContent = `${d.label} (${d.host})`;
         sel.appendChild(opt);
       });
-      // Try restoring previous selection if valid
+      // Try restoring previous selection or pick first
       if (prevKey && snmpDevices.find(d => d.key === prevKey)) {
         sel.value = prevKey;
+      } else if (snmpDevices.length) {
+        sel.value = snmpDevices[0].key;
+        loadSnmpInterfaces();
       }
     }
 
@@ -1220,20 +1223,7 @@ async function loadSnmpInterfaces() {
   // Clear timeout to prevent overlapping refreshes
   clearTimeout(snmpIfaceTimer);
 
-  if (!key) {
-    if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:32px;">Pilih perangkat SNMP untuk melihat interface</td></tr>`;
-    if (countEl) countEl.textContent = '';
-    // reset summary cards to skeletons
-    const statsContainer = document.getElementById('snmp-iface-stats');
-    if (statsContainer) {
-      statsContainer.innerHTML = `
-        <div class="snmp-stat-skeleton"></div>
-        <div class="snmp-stat-skeleton"></div>
-        <div class="snmp-stat-skeleton"></div>
-        <div class="snmp-stat-skeleton"></div>`;
-    }
-    return;
-  }
+  if (!key) return;
 
   // Anti-blink: only show loading if tbody is currently empty
   if (tbody && !tbody.querySelector('tr td[data-iface]')) {
