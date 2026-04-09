@@ -1048,11 +1048,14 @@
     <!-- ══════════════════════════════════════════════════ -->
     <section id="section-snmp" class="tab-section">
 
-      <!-- Device Summary Cards -->
-      <div id="snmp-device-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:16px;"></div>
-
-      <!-- Interface Stats (filled by JS after iface load) -->
-      <div id="snmp-iface-stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;"></div>
+      <!-- Interface Stats: pre-rendered skeletons prevent layout jump -->
+      <div id="snmp-iface-stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;min-height:80px;">
+        <!-- skeleton placeholders (replaced by real data on load) -->
+        <div class="snmp-stat-skeleton"></div>
+        <div class="snmp-stat-skeleton"></div>
+        <div class="snmp-stat-skeleton"></div>
+        <div class="snmp-stat-skeleton"></div>
+      </div>
 
       <!-- Interface List -->
       <div class="dash-card fade-up">

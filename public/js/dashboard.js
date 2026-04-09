@@ -1191,24 +1191,24 @@ function renderSnmpDeviceCards(devices) {
 function renderSnmpIfaceStats(ifaces) {
   const container = document.getElementById('snmp-iface-stats');
   if (!container) return;
-  const total = ifaces.length;
-  const upCount    = ifaces.filter(i => i.status === 'up').length;
-  const downCount  = ifaces.filter(i => i.status === 'down').length;
-  const vlanCount  = ifaces.filter(i => (i.alias || '').toLowerCase().includes('vlan') || (i.name || '').toLowerCase().includes('vlan')).length;
+  const total     = ifaces.length;
+  const upCount   = ifaces.filter(i => i.status === 'up').length;
+  const downCount = ifaces.filter(i => i.status === 'down').length;
+  const vlanCount = ifaces.filter(i => (i.alias || '').toLowerCase().includes('vlan') || (i.name || '').toLowerCase().includes('vlan')).length;
   const stats = [
-    { label: 'Total Interface', value: total,     color: '#3b82f6' },
-    { label: 'Up',              value: upCount,   color: '#22c55e' },
-    { label: 'Down',            value: downCount, color: '#ef4444' },
-    { label: 'VLAN / vlanif',   value: vlanCount, color: '#a855f7' },
+    { label: 'Total Interface', value: total,     color: '#3b82f6', icon: '⊞' },
+    { label: 'Up',              value: upCount,   color: '#22c55e', icon: '▲' },
+    { label: 'Down',            value: downCount, color: '#ef4444', icon: '▼' },
+    { label: 'VLAN / vlanif',   value: vlanCount, color: '#a855f7', icon: '⬡' },
   ];
-  container.innerHTML = stats.map(s => `
-    <div style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:14px;">
-      <div style="width:36px;height:36px;border-radius:50%;background:${s.color}22;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-        <span style="font-size:1rem;font-weight:700;color:${s.color};">${s.value}</span>
+  container.innerHTML = stats.map((s, idx) => `
+    <div class="snmp-stat-card" style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:16px;animation-delay:${idx * 60}ms;">
+      <div style="width:44px;height:44px;border-radius:50%;background:${s.color}18;border:1.5px solid ${s.color}44;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <span style="font-size:1.3rem;font-weight:800;color:${s.color};font-variant-numeric:tabular-nums;">${s.value}</span>
       </div>
       <div>
-        <div style="font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;">${s.label}</div>
-        <div style="font-size:.85rem;font-weight:600;color:#e2e8f0;">${s.value} entri</div>
+        <div style="font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px;">${s.label}</div>
+        <div style="font-size:.9rem;font-weight:700;color:#e2e8f0;">${s.value} <span style="font-size:.7rem;font-weight:400;color:var(--muted);">entri</span></div>
       </div>
     </div>`).join('');
 }
