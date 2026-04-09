@@ -1090,3 +1090,158 @@ async function fetchHistory() {
     }
   } catch (_) {}
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ *  SNMP Devices
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+let snmpDevices = [];
+let snmpIfaceTimer = null;
+
+function fmtBytes(n) {
+  if (!n || isNaN(n)) return '—';
+  if (n < 1024) return n + ' B';
+  if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
+  if (n < 1073741824) return (n / 1048576).toFixed(1) + ' MB';
+  return (n / 1073741824).toFixed(2) + ' GB';
+}
+
+function fmtSnmpUptime(seconds) {
+  const d = Math.floor(seconds / 86400);
+  const h = Math.floor((seconds % 86400) / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  return `${d}d ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+}
+
+async function fetchSnmpDevices() {
+  try {
+    const devices = await fetch('/api/snmp/devices').then(r => r.json());
+    snmpDevices = Array.isArray(devices) ? devices : [];
+
+    // Populate device select dropdown
+    const sel = document.getElementById('snmp-device-select');
+    if (sel) {
+      sel.innerHTML = '<option value="">-- Pilih Perangkat --</option>';
+      snmpDevices.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d.key;
+        opt.textContent = `${d.label} (${d.host})`;
+        sel.appendChild(opt);
+      });
+      // Auto-select first device
+      if (snmpDevices.length && !sel.value) {
+        sel.value = snmpDevices[0].key;
+        loadSnmpInterfaces();
+      }
+    }
+
+    // Fetch all device sysinfo for summary cards
+    const allInfo = await fetch('/api/snmp/all').then(r => r.json());
+    renderSnmpDeviceCards(allInfo);
+  } catch (e) {
+    console.warn('[SNMP] fetchSnmpDevices error:', e.message);
+  }
+}
+
+function renderSnmpDeviceCards(devices) {
+  const container = document.getElementById('snmp-device-cards');
+  if (!container) return;
+  if (!devices || !devices.length) {
+    container.innerHTML = `<div style="color:var(--muted);font-size:.8rem;padding:12px;">Tidak ada perangkat SNMP yang dikonfigurasi di .env</div>`;
+    return;
+  }
+  container.innerHTML = devices.map(d => {
+    const online = !d.error;
+    const statusColor = online ? '#22c55e' : '#ef4444';
+    const uptime = online ? fmtSnmpUptime(d.uptime_s || 0) : '—';
+    return `
+      <div class="dash-card fade-up" style="padding:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+          <div>
+            <div style="font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;">SNMP Device</div>
+            <div style="font-size:1rem;font-weight:700;color:#e2e8f0;">${d.label}</div>
+            <div style="font-family:monospace;font-size:.72rem;color:var(--muted);">${d.host}</div>
+          </div>
+          <span style="background:${statusColor}22;border:1px solid ${statusColor}44;color:${statusColor};font-size:.68rem;font-weight:600;padding:2px 8px;border-radius:6px;">
+            ${online ? '● Online' : '● Offline'}
+          </span>
+        </div>
+        ${online ? `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.75rem;">
+          <div style="background:var(--card-bg);border-radius:8px;padding:8px;">
+            <div style="color:var(--muted);font-size:.65rem;margin-bottom:2px;">UPTIME</div>
+            <div style="font-family:monospace;color:#10b981;font-weight:600;">${uptime}</div>
+          </div>
+          <div style="background:var(--card-bg);border-radius:8px;padding:8px;">
+            <div style="color:var(--muted);font-size:.65rem;margin-bottom:2px;">SYS NAME</div>
+            <div style="font-family:monospace;color:#3b82f6;font-weight:600;font-size:.7rem;">${(d.name || '—').substring(0,16)}</div>
+          </div>
+        </div>
+        <div style="margin-top:8px;font-size:.65rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${(d.descr || '').substring(0,60)}</div>
+        ` : `<div style="color:#ef4444;font-size:.75rem;">${d.error || 'Connection failed'}</div>`}
+      </div>`;
+  }).join('');
+}
+
+async function loadSnmpInterfaces() {
+  const sel = document.getElementById('snmp-device-select');
+  const key = sel ? sel.value : '';
+  if (!key) return;
+
+  const tbody = document.getElementById('snmp-iface-tbody');
+  const countEl = document.getElementById('snmp-iface-count');
+  if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:32px;">Memuat data interface...</td></tr>`;
+
+  try {
+    const data = await fetch(`/api/snmp/interfaces/${key}`).then(r => r.json());
+    if (data.error) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#ef4444;padding:24px;">${data.error}</td></tr>`;
+      return;
+    }
+
+    const ifaces = data.interfaces || [];
+    if (countEl) countEl.textContent = `${ifaces.length} interface`;
+
+    if (!ifaces.length) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:32px;">Tidak ada interface ditemukan</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = ifaces.map(i => {
+      const isUp = i.status === 'up';
+      const statusDot = `<span style="color:${isUp ? '#22c55e' : '#ef4444'};font-weight:700;">${isUp ? '●' : '○'}</span> ${i.status || '—'}`;
+      const alias = i.alias || '';
+      const isVlan = alias.toLowerCase().includes('vlan') || alias.toLowerCase().includes('vlanif');
+      const aliasHtml = alias
+        ? `<span style="background:${isVlan ? 'rgba(168,85,247,.12)' : 'rgba(59,130,246,.1)'};color:${isVlan ? '#c084fc' : '#60a5fa'};border-radius:5px;padding:1px 6px;font-size:.7rem;font-family:monospace;">${alias}</span>`
+        : `<span style="color:var(--muted);">—</span>`;
+      const speed = i.speed ? `${i.speed} Mbps` : '—';
+      return `<tr>
+        <td style="font-family:monospace;font-size:.75rem;color:var(--muted);padding:7px 12px;">${i.idx}</td>
+        <td style="color:#e2e8f0;font-weight:500;padding:7px 12px;">${i.name || '—'}</td>
+        <td style="padding:7px 12px;">${aliasHtml}</td>
+        <td style="text-align:right;font-family:monospace;font-size:.75rem;color:var(--muted);padding:7px 12px;">${speed}</td>
+        <td style="text-align:right;font-family:monospace;font-size:.75rem;color:#3b82f6;padding:7px 12px;">${fmtBytes(i.rxOctets)}</td>
+        <td style="text-align:right;font-family:monospace;font-size:.75rem;color:#a855f7;padding:7px 12px;">${fmtBytes(i.txOctets)}</td>
+        <td style="text-align:center;font-size:.75rem;padding:7px 12px;">${statusDot}</td>
+      </tr>`;
+    }).join('');
+
+    // Auto-refresh every 30s while on SNMP tab
+    clearTimeout(snmpIfaceTimer);
+    snmpIfaceTimer = setTimeout(() => {
+      if (activeTab === 'snmp') loadSnmpInterfaces();
+    }, 30000);
+
+  } catch (e) {
+    if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#ef4444;padding:24px;">${e.message}</td></tr>`;
+  }
+}
+
+// Hook tab switch to load SNMP data on first visit
+const _origSwitchTab = switchTab;
+function switchTab(tab) {
+  _origSwitchTab(tab);
+  if (tab === 'snmp') fetchSnmpDevices();
+  else { clearTimeout(snmpIfaceTimer); }
+}

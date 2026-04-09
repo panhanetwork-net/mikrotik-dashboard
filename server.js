@@ -25,6 +25,7 @@ const { router: alertsRouter, startHealthMonitor,
   registerRouter } = require('./routes/alerts');
 const { router: historyRouter, checkThresholds } = require('./routes/history');
 const { router: pingRouter, startPingMonitor } = require('./routes/ping');
+const snmpRouter  = require('./routes/snmp-poller');
 const requireAuth = require('./middleware/requireAuth');
 
 const app = express();
@@ -56,6 +57,7 @@ app.use('/api/mikrotik', requireAuth, mikrotikRouter);
 app.use('/api/alerts', requireAuth, alertsRouter);
 app.use('/api/history', requireAuth, historyRouter);
 app.use('/api/ping', requireAuth, pingRouter);
+app.use('/api/snmp', requireAuth, snmpRouter);
 
 // ─── Technitium DNS Proxy ───────────────────────────────────────────────────
 app.get('/api/technitium/chart', requireAuth, async (req, res) => {
