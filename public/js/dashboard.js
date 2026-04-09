@@ -45,6 +45,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   initCharts();
   gsap.to('.fade-up', { opacity: 1, y: 0, duration: .5, ease: 'power3.out', stagger: .06, delay: .1 });
+  await fetchMikrotikDevices();
   startPolling();
   startStatusMonitor();
   fetchPingStatus();
@@ -447,8 +448,12 @@ async function fetchHealth() {
 
 /* ─── Fetch: Traffic ─────────────────────────────────────────────────────── */
 async function fetchTraffic() {
-  const data = await fetch('/api/mikrotik/traffic', { method: 'POST' }).then(r => r.json());
+  const sel = document.getElementById('mk-device-select');
+  const key = (sel && sel.value) ? sel.value : 'MAIN';
+
+  const data = await fetch(`/api/mikrotik/interface/stats/${key}`).then(r => r.json());
   if (data.error) throw new Error(data.error);
+  
   let totalRx = 0, totalTx = 0;
   if (Array.isArray(data)) {
     data.forEach(e => {
@@ -459,20 +464,47 @@ async function fetchTraffic() {
   updateTrafficUI(totalRx, totalTx);
 }
 
+/* ─── Fetch: MikroTik Devices Dropdown ─────────────────────────────────────── */
+async function fetchMikrotikDevices() {
+  try {
+    const devices = await fetch('/api/mikrotik/devices', { headers: { 'Authorization': getAuthHeader() } }).then(r => r.json());
+    if (devices.error) throw new Error(devices.error);
+
+    const sel = document.getElementById('mk-device-select');
+    if (!sel) return;
+
+    if (!Array.isArray(devices) || devices.length <= 1) {
+      sel.style.display = 'none';
+      return;
+    }
+
+    const currentVal = sel.value || 'MAIN';
+    sel.innerHTML = devices.map(d => `<option value="${d.key}">${d.label} [${d.host}]</option>`).join('');
+    
+    // Restore or set to 'MAIN' natively
+    if (devices.find(d => d.key === currentVal)) sel.value = currentVal;
+    sel.style.display = 'inline-block';
+  } catch (err) {
+    console.error('Gagal meload MikroTik Devices', err);
+  }
+}
+
 /* ─── Fetch: Interfaces ──────────────────────────────────────────────────── */
 async function fetchInterfaces() {
-  const { ifaces, stats } = await fetch('/api/mikrotik/interfaces').then(r => r.json());
-  const statsMap = {};
-  if (Array.isArray(stats)) stats.forEach(s => { statsMap[s.name] = s; });
+  const sel = document.getElementById('mk-device-select');
+  const key = (sel && sel.value) ? sel.value : 'MAIN';
 
-  const active = (ifaces || []).filter(i => i.running === true || i.running === 'true');
+  const res = await fetch(`/api/mikrotik/interfaces/${key}`).then(r => r.json());
+  if (res.error) throw new Error(res.error);
+  
+  // New backend schema: { total, up, down, vlan, interfaces: [...] }
+  const active = (res.interfaces || []).filter(i => i.up);
   document.getElementById('iface-count').textContent = `${active.length} interface`;
 
   const now = Date.now();
   const rows = active.map(iface => {
-    const s       = statsMap[iface.name] || iface;
-    const rxBytes = parseInt(s['rx-byte'] || 0);
-    const txBytes = parseInt(s['tx-byte'] || 0);
+    const rxBytes = parseInt(iface.rxBytes || 0);
+    const txBytes = parseInt(iface.txBytes || 0);
     let rxRateHtml = '<span style="color:var(--muted)">—</span>';
     let txRateHtml = '<span style="color:var(--muted)">—</span>';
 
@@ -681,12 +713,19 @@ function filterConnections() {
 }
 
 /* ─── Poll Loop ──────────────────────────────────────────────────────────── */
+async function fetchMikrotikStats() {
+  await Promise.all([
+    fetchInterfaces(),
+    fetchTraffic()
+  ]);
+}
+
 async function fetchAll() {
   try {
     await Promise.all([
       fetchTechnitium(),
       fetchResources(),
-      fetchInterfaces(),
+      fetchMikrotikStats(),
       fetchHealth(),
       fetchPppoe(),
       fetchConnections(),

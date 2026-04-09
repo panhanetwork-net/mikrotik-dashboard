@@ -4,17 +4,41 @@ const { runCommand} = require('./routeros-api');
 const router        = express.Router();
 
 /* ─── Helpers ────────────────────────────────────────────────────────────── */
-function apiHost() {
-  const host = (process.env.MIKROTIK_HOST || '').split(':')[0];
-  const port = parseInt(process.env.MIKROTIK_API_PORT || '56988');
-  return { host, port };
+function loadMikrotikDevices() {
+  const envVars = process.env; // Can use native process.env since Settings updates it live now
+  const devices = {
+    MAIN: { key: 'MAIN', label: '.31 Utama (CCR)', host: (envVars.MIKROTIK_HOST||'').split(':')[0], port: parseInt(envVars.MIKROTIK_API_PORT||'56988'), user: envVars.MIKROTIK_USER||'', pass: envVars.MIKROTIK_PASS||'' },
+    BRS:  { key: 'BRS',  label: '.42 X86 (BRS)',   host: (envVars.BRS_HOST||'').split(':')[0],  port: parseInt(envVars.BRS_API_PORT||'8728'), user: envVars.BRS_USER||'', pass: envVars.BRS_PASS||'' },
+    R50:  { key: 'R50',  label: '.50 PDG (BRS)',   host: (envVars.R50_HOST||'').split(':')[0],  port: parseInt(envVars.R50_API_PORT||'8750'), user: envVars.R50_USER||'', pass: envVars.R50_PASS||'' },
+    R155: { key: 'R155', label: '.155 NOC',        host: (envVars.R155_HOST||'').split(':')[0], port: parseInt(envVars.R155_API_PORT||'1945'), user: envVars.R155_USER||'', pass: envVars.R155_PASS||'' },
+  };
+  
+  // Custom dynamically added devices via Settings GUI (MK_DEVICE_<KEY>_HOST)
+  for (const [k, v] of Object.entries(envVars)) {
+    const m = k.match(/^MK_DEVICE_([A-Z0-9_]+)_HOST$/);
+    if (!m) continue;
+    const key = m[1];
+    devices[key] = {
+      key,
+      label: envVars[`MK_DEVICE_${key}_LABEL`] || `Device ${key}`,
+      host:  (v||'').split(':')[0],
+      port:  parseInt(envVars[`MK_DEVICE_${key}_API_PORT`] || '8728'),
+      user:  envVars[`MK_DEVICE_${key}_USER`] || '',
+      pass:  envVars[`MK_DEVICE_${key}_PASS`] || ''
+    };
+  }
+  return devices;
 }
-function user() { return process.env.MIKROTIK_USER || ''; }
-function pass() { return process.env.MIKROTIK_PASS || ''; }
 
-async function api(cmd, extra = [], maxRows = Infinity) {
-  const { host, port } = apiHost();
-  return runCommand(host, port, user(), pass(), cmd, extra, maxRows);
+function getDeviceAuth(key = 'MAIN') {
+  const devices = loadMikrotikDevices();
+  const d = devices[key.toUpperCase()] || devices['MAIN'];
+  return d;
+}
+
+async function api(cmd, extra = [], maxRows = Infinity, deviceKey = 'MAIN') {
+  const { host, port, user, pass } = getDeviceAuth(deviceKey);
+  return runCommand(host, port, user, pass, cmd, extra, maxRows);
 }
 
 // Interface types considered "core" (exclude pppoe-out tunnels per-session)
@@ -103,16 +127,80 @@ router.get('/health', async (req, res) => {
   }
 });
 
-/* ─── GET /api/mikrotik/interfaces ─────────────────────────────────────────── */
-router.get('/interfaces', async (req, res) => {
+/* ─── GET /api/mikrotik/interfaces/:key? ───────────────────────────────────── */
+router.get('/interfaces/:key?', async (req, res) => {
   try {
-    const all    = await api('/interface/print');
-    const ifaces = all.filter(isCore); // hide pppoe-out session tunnels
-    // rx-byte/tx-byte are already included in /interface/print output on ROS 7.x
-    return res.json({ ifaces, stats: ifaces });
+    const key = req.params.key || 'MAIN';
+    // Single call to get everything efficiently
+    const all = await api('/interface/print', [], Infinity, key);
+    
+    // Counters
+    let up = 0, down = 0, vlanCount = 0;
+    const coreList = [];
+
+    for (let i = 0; i < all.length; i++) {
+      const row = all[i];
+      if (isCore(row)) {
+        coreList.push(row);
+        const nameL = (row.name || '').toLowerCase();
+        const run   = row.running === 'true';
+        if (run) up++; else down++;
+        if (nameL.includes('vlan')) vlanCount++;
+      }
+    }
+    
+    // Render
+    const formatted = coreList.map((item, idx) => ({
+      idx: idx + 1,
+      name: item.name || '',
+      type: item.type || '',
+      mac: item['mac-address'] || '',
+      mtu: item['actual-mtu'] || item.mtu || '',
+      txSpeed: '-', // Traffic comes from /interface/monitor-traffic loop
+      rxSpeed: '-',
+      txBytes: Number(item['tx-byte'] || 0),
+      rxBytes: Number(item['rx-byte'] || 0),
+      up: item.running === 'true',
+      lastLinkChange: item['last-link-change'] || 'N/A'
+    }));
+
+    return res.json({
+      total: coreList.length,
+      up,
+      down,
+      vlan: vlanCount,
+      interfaces: formatted
+    });
   } catch (err) {
     return res.status(502).json({ error: err.message });
   }
+});
+
+/* ─── GET /api/mikrotik/interface/stats/:key? ───────────────────────────────── */
+router.get('/interface/stats/:key?', async (req, res) => {
+  try {
+    const key = req.params.key || 'MAIN';
+    const all = await api('/interface/print', [], Infinity, key);
+    // Only monitor core (non-pppoe-out) running interfaces, max 100
+    const running = all.filter(i => i.running === 'true' && isCore(i)).map(i => i.name).slice(0, 100);
+    if (!running.length) return res.json([]);
+    const data = await api('/interface/monitor-traffic', [
+      `=interface=${running.join(',')}`,
+      '=once=',
+    ], Infinity, key);
+    return res.json(data);
+  } catch (err) {
+    return res.status(502).json({ error: err.message });
+  }
+});
+
+/* ─── GET /api/mikrotik/devices (New Route for Dropdown) ───────────────────── */
+router.get('/devices', (req, res) => {
+  const devices = loadMikrotikDevices();
+  const list = Object.values(devices)
+    .filter(d => d.host && d.port)
+    .map(d => ({ key: d.key, label: d.label, host: d.host }));
+  res.json(list);
 });
 
 /* ─── POST /api/mikrotik/traffic ────────────────────────────────────────────── */

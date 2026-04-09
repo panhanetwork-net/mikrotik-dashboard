@@ -547,7 +547,13 @@
             <h2 style="color:#fff;font-weight:600;font-size:.92rem;">Interface Aktif</h2>
             <p style="color:var(--muted);font-size:.7rem;margin-top:2px;">Daftar interface dan statistik traffic</p>
           </div>
-          <span id="iface-count" class="stat-badge">0 interface</span>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <select id="mk-device-select" class="login-input" onchange="fetchMikrotikStats()" 
+              style="display:none;background:rgba(255,255,255,0.05);border:1px solid var(--border-color);color:#e2e8f0;font-size:.7rem;padding:6px 12px;border-radius:6px;outline:none;cursor:pointer;">
+              <!-- Javascript populates this -->
+            </select>
+            <span id="iface-count" class="stat-badge">0 interface</span>
+          </div>
         </div>
         <div style="overflow-x:auto;border-radius:10px;border:1px solid rgba(30,37,52,.5);">
           <table class="dash-table">
@@ -1210,6 +1216,19 @@
   <style>
     .settings-tab-btn { transition: color 0.2s; }
     .settings-tab-btn:hover { color: var(--accent); }
+    #settings-form input {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: #e2e8f0;
+      border-radius: 6px;
+      outline: none;
+      width: 100%;
+      box-sizing: border-box;
+      transition: border-color 0.2s;
+    }
+    #settings-form input:focus {
+      border-color: var(--accent);
+    }
     @keyframes spin { 100% { transform: rotate(360deg); } }
   </style>
 
