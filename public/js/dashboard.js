@@ -55,6 +55,8 @@ function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('section-' + tab).classList.add('visible');
   document.getElementById('tab-' + tab).classList.add('active');
+  if (tab === 'snmp') { fetchSnmpDevices(); }
+  else { clearTimeout(snmpIfaceTimer); }
 }
 
 /* ─── Utility ────────────────────────────────────────────────────────────── */
@@ -1238,10 +1240,4 @@ async function loadSnmpInterfaces() {
   }
 }
 
-// Hook tab switch to load SNMP data on first visit
-const _origSwitchTab = switchTab;
-function switchTab(tab) {
-  _origSwitchTab(tab);
-  if (tab === 'snmp') fetchSnmpDevices();
-  else { clearTimeout(snmpIfaceTimer); }
-}
+// (SNMP tab hook is integrated into switchTab above)
