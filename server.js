@@ -25,7 +25,8 @@ const { router: alertsRouter, startHealthMonitor,
   registerRouter } = require('./routes/alerts');
 const { router: historyRouter, checkThresholds } = require('./routes/history');
 const { router: pingRouter, startPingMonitor } = require('./routes/ping');
-const snmpRouter  = require('./routes/snmp-poller');
+const snmpRouter = require('./routes/snmp-poller');
+const settingsRouter = require('./routes/settings');
 const requireAuth = require('./middleware/requireAuth');
 
 const app = express();
@@ -58,6 +59,7 @@ app.use('/api/alerts', requireAuth, alertsRouter);
 app.use('/api/history', requireAuth, historyRouter);
 app.use('/api/ping', requireAuth, pingRouter);
 app.use('/api/snmp', requireAuth, snmpRouter);
+app.use('/api/settings', requireAuth, settingsRouter);
 
 // ─── Technitium DNS Proxy ───────────────────────────────────────────────────
 app.get('/api/technitium/chart', requireAuth, async (req, res) => {
@@ -65,10 +67,10 @@ app.get('/api/technitium/chart', requireAuth, async (req, res) => {
     const dURL = process.env.TECHNITIUM_URL;
     const token = process.env.TECHNITIUM_TOKEN;
     if (!dURL || !token) return res.status(500).json({ error: 'Technitium ENV not set' });
-    
+
     const u = `${dURL}/api/dashboard/stats/get?token=${token}&type=lastHour`;
     const resp = await fetch(u);
-    
+
     if (!resp.ok) {
       const errText = await resp.text();
       throw new Error(`API Error ${resp.status}: ${errText}`);
@@ -109,7 +111,6 @@ app.listen(PORT, () => {
   console.log(`  ─────────────────────────────────────`);
   console.log(`  Server berjalan di http://localhost:${PORT}`);
   console.log(`  Telegram alerts: ${process.env.TELEGRAM_BOT_TOKEN ? 'AKTIF' : 'TIDAK DIKONFIGURASI'}`);
-  console.log(`  Threshold alerts: Board>60°C | CPU temp>75°C | CPU load>80%`);
   console.log(`  ─────────────────────────────────────\n`);
 
   startHealthMonitor(mikrotikFetch, checkThresholds);
@@ -118,7 +119,7 @@ app.listen(PORT, () => {
 });
 
 // ─── Traffic Recorder (fills /api/history/traffic ring buffer) ────────────────
-const { runCommand }              = require('./routes/routeros-api');
+const { runCommand } = require('./routes/routeros-api');
 const { recordTraffic, recordUptime } = require('./routes/history');
 
 async function trafficSnapshot() {
@@ -134,12 +135,12 @@ async function trafficSnapshot() {
     ]);
 
     const running = ifaces
-      .filter(i => i.running === 'true' && !(i.type||'').toLowerCase().startsWith('pppoe'))
+      .filter(i => i.running === 'true' && !(i.type || '').toLowerCase().startsWith('pppoe'))
       .map(i => i.name)
       .slice(0, 100);
 
     let rx = 0, tx = 0, sfpRx = 0, sfpTx = 0, lacpRx = 0, lacpTx = 0, arahRx = 0, arahTx = 0;
-    
+
     if (running.length) {
       const pMain = runCommand(host, port, user, pass, '/interface/monitor-traffic', [
         `=interface=${running.join(',')}`,
@@ -155,32 +156,32 @@ async function trafficSnapshot() {
       const pBrs = runCommand(brsHost, brsApiPort, brsUser, brsPass, '/interface/print').then(swIfaces => {
         if (!Array.isArray(swIfaces)) return [];
         const running = swIfaces.filter(i => i.running === 'true').map(i => i.name).slice(0, 50);
-        if(!running.length) return [];
+        if (!running.length) return [];
         return runCommand(brsHost, brsApiPort, brsUser, brsPass, '/interface/monitor-traffic', [
-            `=interface=${running.join(',')}`,
-            '=once=',
-          ]).catch(e => ({ error: e }));
+          `=interface=${running.join(',')}`,
+          '=once=',
+        ]).catch(e => ({ error: e }));
       }).catch(e => ({ error: e }));
 
       const swHost = process.env.SW_HOST || '192.20.40.2';
       const swApiPort = parseInt(process.env.SW_API_PORT || '8728');
       const swUser = process.env.SW_USER || process.env.MIKROTIK_USER || 'admin';
       const swPass = process.env.SW_PASS || process.env.MIKROTIK_PASS || '';
-      
+
       const pSw = runCommand(swHost, swApiPort, swUser, swPass, '/interface/print')
         .catch(e => ({ error: e })).then(async (swIfaces) => {
           if (swIfaces && swIfaces.error) return swIfaces;
           if (!Array.isArray(swIfaces)) return [];
-          
+
           const swIfaceName = process.env.SW_INTERFACE || '';
           const target = swIfaces.find(i => {
-             const n = (i.name || '').toUpperCase();
-             const c = (i.comment || '').toUpperCase();
-             return (swIfaceName && n === swIfaceName.toUpperCase()) || 
-                    n.includes('ARAH-BAROS') || c.includes('ARAH-BAROS') || c.includes('ARAH BAROS');
+            const n = (i.name || '').toUpperCase();
+            const c = (i.comment || '').toUpperCase();
+            return (swIfaceName && n === swIfaceName.toUpperCase()) ||
+              n.includes('ARAH-BAROS') || c.includes('ARAH-BAROS') || c.includes('ARAH BAROS');
           });
           if (!target) return [];
-          
+
           return runCommand(swHost, swApiPort, swUser, swPass, '/interface/monitor-traffic', [
             `=interface=${target.name}`,
             '=once=',
@@ -225,7 +226,7 @@ async function trafficSnapshot() {
 
     recordTraffic(rx, tx, sfpRx, sfpTx, lacpRx, lacpTx, arahRx, arahTx);
     if (resRows[0]) recordUptime(resRows[0].uptime || '');
-  } catch (_) {}
+  } catch (_) { }
 }
 
 function startTrafficRecorder() {

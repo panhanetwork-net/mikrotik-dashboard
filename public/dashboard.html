@@ -186,13 +186,20 @@
         <option value="5000">5s</option>
         <option value="10000">10s</option>
       </select>
-      <button onclick="testTelegram()" class="btn-secondary"
-        style="font-size:.75rem;padding:.3rem .8rem;display:flex;align-items:center;gap:5px;"><svg width="13"
-          height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-        </svg> Alert</button>
-      <button onclick="doLogout()" class="btn-secondary" style="font-size:.75rem;padding:.3rem .8rem;">Keluar</button>
+      <!-- Navbar Actions -->
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button onclick="document.getElementById('settings-modal').style.display='flex';loadSettings();" style="background:#3b82f622;border:1px solid #3b82f644;color:#60a5fa;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:.7rem;font-weight:600;display:flex;align-items:center;gap:6px;transition:0.2s;">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+          Settings
+        </button>
+        <button onclick="toggleAlertMute()" class="tab-btn" id="btn-top-alert" style="background:#1e293b;border:1px solid var(--border-color);color:#94a3b8;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:.7rem;font-weight:600;display:flex;align-items:center;gap:6px;">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+          Alert
+        </button>
+        <button onclick="logout()" class="tab-btn" style="background:#ef444422;border:1px solid #ef444444;color:#f87171;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:.7rem;font-weight:600;display:flex;align-items:center;gap:6px;">
+          Keluar
+        </button>
+      </div>
     </div>
 
   </header>
@@ -1112,6 +1119,100 @@
         d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
     </svg><span id="toast-msg">Error</span></div>
 
-</body>
+  <!-- Settings Modal Overlay -->
+  <div id="settings-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:#111827;border:1px solid var(--border-color);border-radius:12px;width:95%;max-width:500px;box-shadow:0 10px 40px rgba(0,0,0,0.5);overflow:hidden;animation:snmpSlideDown 0.3s cubic-bezier(.22,.68,0,1.2);">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border-color);background:var(--card-bg);">
+        <h3 style="margin:0;font-size:1rem;color:#e2e8f0;font-weight:600;">System Settings</h3>
+        <button onclick="document.getElementById('settings-modal').style.display='none';" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.2rem;line-height:1;">&times;</button>
+      </div>
+      <div style="padding:20px;max-height:70vh;overflow-y:auto;">
+        
+        <!-- Tab Headers -->
+        <div style="display:flex;gap:12px;margin-bottom:16px;border-bottom:1px solid var(--border-color);padding-bottom:12px;">
+          <button class="settings-tab-btn active" id="st-mikrotik" onclick="switchSettingsTab('mikrotik')" style="background:none;border:none;color:var(--accent);font-size:.8rem;font-weight:600;cursor:pointer;">MikroTik</button>
+          <button class="settings-tab-btn" id="st-telegram" onclick="switchSettingsTab('telegram')" style="background:none;border:none;color:var(--muted);font-size:.8rem;font-weight:600;cursor:pointer;">Telegram Alert</button>
+          <button class="settings-tab-btn" id="st-system" onclick="switchSettingsTab('system')" style="background:none;border:none;color:var(--muted);font-size:.8rem;font-weight:600;cursor:pointer;">System</button>
+        </div>
 
+        <form id="settings-form" onsubmit="saveSettings(event)">
+          
+          <!-- Tab Content: MikroTik -->
+          <div id="settings-mikrotik" class="settings-pane" style="display:block;">
+            <div style="margin-bottom:12px;">
+              <label style="display:block;font-size:.75rem;color:#94a3b8;margin-bottom:6px;">MikroTik IP / Host</label>
+              <input type="text" name="MK_HOST" id="s_MK_HOST" class="login-input" style="padding:8px;font-size:.8rem;" required>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+              <div>
+                <label style="display:block;font-size:.75rem;color:#94a3b8;margin-bottom:6px;">API Port</label>
+                <input type="number" name="MK_API_PORT" id="s_MK_API_PORT" class="login-input" style="padding:8px;font-size:.8rem;" required>
+              </div>
+              <div>
+                <label style="display:block;font-size:.75rem;color:#94a3b8;margin-bottom:6px;">Web Port (Graph)</label>
+                <input type="number" name="MK_WEB_PORT" id="s_MK_WEB_PORT" class="login-input" style="padding:8px;font-size:.8rem;" required>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+              <div>
+                <label style="display:block;font-size:.75rem;color:#94a3b8;margin-bottom:6px;">Username</label>
+                <input type="text" name="MK_USER" id="s_MK_USER" class="login-input" style="padding:8px;font-size:.8rem;" required>
+              </div>
+              <div>
+                <label style="display:block;font-size:.75rem;color:#94a3b8;margin-bottom:6px;">Password</label>
+                <input type="password" name="MK_PASS" id="s_MK_PASS" class="login-input" style="padding:8px;font-size:.8rem;" placeholder="********">
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab Content: Telegram -->
+          <div id="settings-telegram" class="settings-pane" style="display:none;">
+            <div style="margin-bottom:12px;">
+              <label style="display:block;font-size:.75rem;color:#94a3b8;margin-bottom:6px;">Bot Token</label>
+              <input type="password" name="TELEGRAM_BOT_TOKEN" id="s_TELEGRAM_BOT_TOKEN" class="login-input" style="padding:8px;font-size:.8rem;" placeholder="********">
+              <span style="font-size:.65rem;color:var(--muted);display:block;margin-top:4px;">*Mengganti token akan me-restart backend instan.</span>
+            </div>
+            <div style="margin-bottom:12px;">
+              <label style="display:block;font-size:.75rem;color:#94a3b8;margin-bottom:6px;">Chat ID</label>
+              <input type="text" name="TELEGRAM_CHAT_ID" id="s_TELEGRAM_CHAT_ID" class="login-input" style="padding:8px;font-size:.8rem;" required>
+            </div>
+          </div>
+
+          <!-- Tab Content: System -->
+          <div id="settings-system" class="settings-pane" style="display:none;">
+            <div style="margin-bottom:12px;">
+              <label style="display:block;font-size:.75rem;color:#94a3b8;margin-bottom:6px;">Dashboard Password</label>
+              <input type="password" name="DASHBOARD_PASS" id="s_DASHBOARD_PASS" class="login-input" style="padding:8px;font-size:.8rem;" placeholder="********">
+            </div>
+            <div style="margin-bottom:12px;">
+              <label style="display:block;font-size:.75rem;color:#94a3b8;margin-bottom:6px;">Web Server Port</label>
+              <input type="number" name="PORT" id="s_PORT" class="login-input" style="padding:8px;font-size:.8rem;" required>
+              <span style="font-size:.65rem;color:var(--muted);display:block;margin-top:4px;">*Mengganti port akan me-restart backend instan.</span>
+            </div>
+          </div>
+
+        </form>
+      </div>
+      <div style="padding:16px 20px;border-top:1px solid var(--border-color);display:flex;justify-content:flex-end;gap:12px;background:var(--card-bg);">
+        <button type="button" onclick="document.getElementById('settings-modal').style.display='none';" style="background:none;border:1px solid var(--border-color);color:#e2e8f0;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:.8rem;">Batal</button>
+        <button type="submit" form="settings-form" id="settings-save-btn" style="background:var(--accent);border:none;color:#fff;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:.8rem;font-weight:600;">Simpan Pengaturan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Restart Overlay Popup -->
+  <div id="restart-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.95);backdrop-filter:blur(8px);z-index:99999;align-items:center;justify-content:center;flex-direction:column;gap:20px;">
+    <div style="width:50px;height:50px;border:4px solid #3b82f6;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;"></div>
+    <h3 style="color:#fff;margin:0;font-size:1.4rem;font-weight:600;">Merestart Server...</h3>
+    <p style="color:#94a3b8;font-size:.9rem;margin:0;text-align:center;">Dashboard sedang menyesuaikan konfigurasi baru.<br>Memuat otomatis dalam <strong id="restart-countdown" style="color:#e2e8f0;">4</strong> detik.</p>
+  </div>
+
+  <style>
+    .settings-tab-btn { transition: color 0.2s; }
+    .settings-tab-btn:hover { color: var(--accent); }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+  </style>
+
+  <script src="/js/dashboard.js"></script>
+</body>
 </html>

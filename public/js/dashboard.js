@@ -1294,3 +1294,97 @@ async function loadSnmpInterfaces() {
 }
 
 // (SNMP tab hook is integrated into switchTab above)
+
+// ═════════════════════ GUI SETTINGS MODAL ═════════════════════
+
+function switchSettingsTab(tab) {
+  document.querySelectorAll('.settings-tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.settings-pane').forEach(p => p.style.display = 'none');
+  
+  document.getElementById(`st-${tab}`).classList.add('active');
+  document.getElementById(`settings-${tab}`).style.display = 'block';
+}
+
+async function loadSettings() {
+  try {
+    const res = await fetch('/api/settings', { headers: { 'Authorization': getAuthHeader() } });
+    if (res.status === 401 || res.status === 403) return logout();
+    const data = await res.json();
+    
+    // Auto-fill all inputs based on backend keys
+    for (const [key, val] of Object.entries(data)) {
+      const input = document.getElementById(`s_${key}`);
+      if (input) {
+        if (input.type === 'password' && val === '********') {
+          input.value = ''; // Let placeholder show, don't submit placeholder
+        } else {
+          input.value = val;
+        }
+      }
+    }
+  } catch (err) {
+    showToast('Gagal memuat pengaturan: ' + err.message);
+  }
+}
+
+async function saveSettings(e) {
+  e.preventDefault();
+  const btn = document.getElementById('settings-save-btn');
+  btn.textContent = 'Menyimpan...';
+  btn.disabled = true;
+
+  const form = document.getElementById('settings-form');
+  const fd = new FormData(form);
+  const payload = {};
+  
+  fd.forEach((value, key) => {
+    // Only send fields that aren't empty (avoids overriding passwords with empty strings)
+    if (value.trim() !== '') {
+      payload[key] = value.trim();
+    }
+  });
+
+  try {
+    const res = await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 
+        'Authorization': getAuthHeader(),
+        'Content-Type': 'application/json' 
+      },
+      body: JSON.stringify(payload)
+    });
+    
+    if (res.status === 401 || res.status === 403) return logout();
+    const data = await res.json();
+    
+    if (data.error) throw new Error(data.error);
+
+    document.getElementById('settings-modal').style.display = 'none';
+
+    if (data.requiresRestart) {
+      // Show PM2 restart blocking overlay
+      const overlay = document.getElementById('restart-overlay');
+      overlay.style.display = 'flex';
+      let sec = 4;
+      const cnt = document.getElementById('restart-countdown');
+      const timer = setInterval(() => {
+        sec--;
+        if (cnt) cnt.textContent = sec;
+        if (sec <= 0) {
+          clearInterval(timer);
+          window.location.reload();
+        }
+      }, 1000);
+    } else {
+      showToast(data.message || 'Pengaturan berhasil disimpan');
+      // Soft refresh connections natively
+      fetchMikrotikStats();
+    }
+    
+  } catch (err) {
+    showToast('Gagal menyimpan: ' + err.message);
+  } finally {
+    btn.textContent = 'Simpan Pengaturan';
+    btn.disabled = false;
+  }
+}
