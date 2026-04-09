@@ -19,6 +19,8 @@
 const dgram   = require('dgram');
 const express = require('express');
 const router  = express.Router();
+const fs      = require('fs');
+const path    = require('path');
 
 /* ─── OID Constants (IF-MIB + System MIB) ────────────────────────────────── */
 const OID = {
@@ -39,18 +41,41 @@ const OID = {
 /* ─── Load SNMP devices from .env ─────────────────────────────────────────── */
 function loadDevices() {
   const devices = {};
+  
+  // Read latest .env from disk dynamically (avoids PM2 cache issues)
+  const envVars = { ...process.env };
+  try {
+    const envPath = path.join(__dirname, '../.env');
+    const lines = fs.readFileSync(envPath, 'utf8').split('\n');
+    for (const line of lines) {
+      const t = line.trim();
+      if (!t || t.startsWith('#')) continue;
+      const idx = t.indexOf('=');
+      if (idx < 0) continue;
+      const key = t.slice(0, idx).trim();
+      let val = t.slice(idx + 1).trim();
+      // Remove surrounding quotes if present
+      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+        val = val.slice(1, -1);
+      }
+      envVars[key] = val;
+    }
+  } catch (e) {
+    // Silently fallback to process.env if .env cannot be read
+  }
+
   // Match pattern: SNMP_DEVICE_<KEY>_HOST
-  for (const [k, v] of Object.entries(process.env)) {
+  for (const [k, v] of Object.entries(envVars)) {
     const m = k.match(/^SNMP_DEVICE_([A-Z0-9_]+)_HOST$/);
     if (!m) continue;
     const key = m[1];
     devices[key] = {
       key,
       host:      v,
-      community: process.env[`SNMP_DEVICE_${key}_COMMUNITY`] || 'public',
-      label:     process.env[`SNMP_DEVICE_${key}_LABEL`]     || `Device ${key}`,
-      port:      parseInt(process.env[`SNMP_DEVICE_${key}_PORT`] || '161'),
-      disabled:  process.env[`SNMP_DEVICE_${key}_DISABLED`]  || false,
+      community: envVars[`SNMP_DEVICE_${key}_COMMUNITY`] || 'public',
+      label:     envVars[`SNMP_DEVICE_${key}_LABEL`]     || `Device ${key}`,
+      port:      parseInt(envVars[`SNMP_DEVICE_${key}_PORT`] || '161'),
+      disabled:  envVars[`SNMP_DEVICE_${key}_DISABLED`]  || false,
     };
   }
   return devices;

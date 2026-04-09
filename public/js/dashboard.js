@@ -1232,8 +1232,19 @@ async function loadSnmpInterfaces() {
 
   try {
     const data = await fetch(`/api/snmp/interfaces/${key}`).then(r => r.json());
-    if (data.error) {
-      if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#ef4444;padding:24px;">${data.error}</td></tr>`;
+    const errMsg = data.error || (data.sysinfo && data.sysinfo.error);
+    if (errMsg) {
+      if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#ef4444;padding:24px;">${errMsg}</td></tr>`;
+      if (countEl) countEl.textContent = '0 entri';
+      // reset summary cards to skeletons or zero
+      const statsContainer = document.getElementById('snmp-iface-stats');
+      if (statsContainer) {
+        statsContainer.innerHTML = `
+          <div class="snmp-stat-skeleton"></div>
+          <div class="snmp-stat-skeleton"></div>
+          <div class="snmp-stat-skeleton"></div>
+          <div class="snmp-stat-skeleton"></div>`;
+      }
       return;
     }
 
