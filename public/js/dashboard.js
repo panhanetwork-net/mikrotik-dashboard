@@ -1120,23 +1120,20 @@ async function fetchSnmpDevices() {
     const devices = await fetch('/api/snmp/devices').then(r => r.json());
     snmpDevices = Array.isArray(devices) ? devices : [];
 
-    // Populate device select (no placeholder — auto-select first)
+    // Populate device select (with placeholder, wait for user click to load interfaces)
     const sel = document.getElementById('snmp-device-select');
     if (sel) {
       const prevKey = sel.value;
-      sel.innerHTML = '';
+      sel.innerHTML = '<option value="">-- Pilih Perangkat --</option>';
       snmpDevices.forEach(d => {
         const opt = document.createElement('option');
         opt.value = d.key;
         opt.textContent = `${d.label} (${d.host})`;
         sel.appendChild(opt);
       });
-      // Restore previous selection, or pick first
+      // Try restoring previous selection if valid
       if (prevKey && snmpDevices.find(d => d.key === prevKey)) {
         sel.value = prevKey;
-      } else if (snmpDevices.length) {
-        sel.value = snmpDevices[0].key;
-        loadSnmpInterfaces();
       }
     }
 
@@ -1216,10 +1213,27 @@ function renderSnmpIfaceStats(ifaces) {
 async function loadSnmpInterfaces() {
   const sel = document.getElementById('snmp-device-select');
   const key = sel ? sel.value : '';
-  if (!key) return;
 
   const tbody = document.getElementById('snmp-iface-tbody');
   const countEl = document.getElementById('snmp-iface-count');
+
+  // Clear timeout to prevent overlapping refreshes
+  clearTimeout(snmpIfaceTimer);
+
+  if (!key) {
+    if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:32px;">Pilih perangkat SNMP untuk melihat interface</td></tr>`;
+    if (countEl) countEl.textContent = '';
+    // reset summary cards to skeletons
+    const statsContainer = document.getElementById('snmp-iface-stats');
+    if (statsContainer) {
+      statsContainer.innerHTML = `
+        <div class="snmp-stat-skeleton"></div>
+        <div class="snmp-stat-skeleton"></div>
+        <div class="snmp-stat-skeleton"></div>
+        <div class="snmp-stat-skeleton"></div>`;
+    }
+    return;
+  }
 
   // Anti-blink: only show loading if tbody is currently empty
   if (tbody && !tbody.querySelector('tr td[data-iface]')) {
