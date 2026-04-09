@@ -427,7 +427,9 @@ async function fetchResources() {
   };
 
   applyRes(r.main, 'main');
-  applyRes(r.brs, 'brs');
+  applyRes(r.r42, 'r42');
+  applyRes(r.r50, 'r50');
+  applyRes(r.r155, 'r155');
 }
 
 /* ─── Fetch: Health ──────────────────────────────────────────────────────── */

@@ -44,39 +44,49 @@ router.get('/resources', async (req, res) => {
   try {
     const pMain = api('/system/resource/print').catch(() => []);
     
-    const brsHost = process.env.BRS_HOST || '157.66.36.50';
-    const brsApiPort = parseInt(process.env.BRS_API_PORT || '8750');
-    const brsWwwPort = parseInt(process.env.BRS_WWW_PORT || '8965');
-    const brsUser = process.env.BRS_USER || process.env.MIKROTIK_USER || 'admin';
-    const brsPass = process.env.BRS_PASS || process.env.MIKROTIK_PASS || '';
+    const fetchRes = async (prefix) => {
+      const host = process.env[`${prefix}_HOST`];
+      if (!host) return [];
+      const apiPort = parseInt(process.env[`${prefix}_API_PORT`] || '8728');
+      const wwwPort = parseInt(process.env[`${prefix}_WWW_PORT`] || '80');
+      const user = process.env[`${prefix}_USER`] || process.env.MIKROTIK_USER || 'admin';
+      const pass = process.env[`${prefix}_PASS`] || process.env.MIKROTIK_PASS || '';
 
-    const pBrs = runCommand(brsHost, brsApiPort, brsUser, brsPass, '/system/resource/print')
-      .catch(e => ({ error: e })).then(async (resObj) => {
-        if (resObj && resObj.error) {
-           try {
-             const auth = Buffer.from(brsUser + ':' + brsPass).toString('base64');
-             const r = await fetch(`http://${brsHost}:${brsWwwPort}/rest/system/resource`, {
-               headers: { 'Authorization': 'Basic ' + auth }
-             });
-             const text = await r.text();
+      return runCommand(host, apiPort, user, pass, '/system/resource/print')
+        .catch(e => ({ error: e })).then(async (resObj) => {
+          if (resObj && resObj.error) {
              try {
-               const j = JSON.parse(text);
-               return Array.isArray(j) ? j : [j];
+               const auth = Buffer.from(user + ':' + pass).toString('base64');
+               const r = await fetch(`http://${host}:${wwwPort}/rest/system/resource`, {
+                 headers: { 'Authorization': 'Basic ' + auth }
+               });
+               const text = await r.text();
+               try {
+                 const j = JSON.parse(text);
+                 return Array.isArray(j) ? j : [j];
+               } catch (e) {
+                 return [];
+               }
              } catch (e) {
                return [];
              }
-           } catch (e) {
-             return [];
-           }
-        }
-        return resObj;
-      });
+          }
+          return resObj;
+        });
+    };
 
-    const [mainRows, brsRows] = await Promise.all([pMain, pBrs]);
+    const [mainRows, r42Rows, r50Rows, r155Rows] = await Promise.all([
+      pMain,
+      fetchRes('BRS'),
+      fetchRes('R50'),
+      fetchRes('R155')
+    ]);
     
     return res.json({
       main: (Array.isArray(mainRows) ? mainRows[0] : null) || {},
-      brs:  (Array.isArray(brsRows) ? brsRows[0] : null) || {}
+      r42:  (Array.isArray(r42Rows) ? r42Rows[0] : null) || {},
+      r50:  (Array.isArray(r50Rows) ? r50Rows[0] : null) || {},
+      r155: (Array.isArray(r155Rows) ? r155Rows[0] : null) || {}
     });
   } catch (err) {
     return res.status(502).json({ error: err.message });
