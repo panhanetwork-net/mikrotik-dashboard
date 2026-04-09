@@ -29,6 +29,9 @@ let allConns  = [];
 let chartHistGlobal, chartHistSfp, chartHistLacp, chartHistArah;
 const ifaceCharts = {}; // name -> { rxData, txData, chart }
 const MAX_IFACE_POINTS = 30;
+// SNMP state (declared here so switchTab can reference them safely)
+let snmpDevices = [];
+let snmpIfaceTimer = null;
 
 /* ─── Init ───────────────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', async () => {
@@ -1096,9 +1099,6 @@ async function fetchHistory() {
 /* ═══════════════════════════════════════════════════════════════════════════
  *  SNMP Devices
  * ═══════════════════════════════════════════════════════════════════════════ */
-
-let snmpDevices = [];
-let snmpIfaceTimer = null;
 
 function fmtBytes(n) {
   if (!n || isNaN(n)) return '—';
