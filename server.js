@@ -35,7 +35,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(session({
-  store: new MemoryStore({ checkPeriod: 30 * 24 * 60 * 60 * 1000 }), // 30 hari
+  store: new MemoryStore({ checkPeriod: 24 * 60 * 60 * 1000 }), // 24 hours checks
   secret: process.env.SESSION_SECRET || 'fallback-secret-change-me',
   resave: false,
   saveUninitialized: false,
