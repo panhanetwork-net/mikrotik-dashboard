@@ -501,45 +501,101 @@ async function fetchResources() {
   const r = await fetch('/api/mikrotik/resources').then(res => res.json());
   if (r.error) throw new Error(r.error);
 
-  const applyRes = (obj, suffix) => {
-    if (!obj || Object.keys(obj).length === 0) return;
-    
-    const cpu    = parseInt(obj['cpu-load'] || 0);
-    const total  = parseInt(obj['total-memory'] || 1);
-    const free   = parseInt(obj['free-memory'] || 0);
-    const used   = total - free;
-    const memPct = Math.round((used / total) * 100);
+  const container = document.getElementById('system-status-container');
+  if (!container) return;
 
-    animateNumber(`cpu-val-${suffix}`, cpu);
-    gsap.to(`#cpu-bar-${suffix}`, { width: cpu + '%', duration: .6, ease: 'power2.out' });
-    document.getElementById(`cpu-bar-${suffix}`).style.background =
-      cpu > 80 ? 'linear-gradient(90deg,#ef4444,#f87171)' :
-      cpu > 50 ? 'linear-gradient(90deg,#f59e0b,#fbbf24)' :
-                 'linear-gradient(90deg,#3b82f6,#60a5fa)';
+  const mkDevicesMap = {};
+  if (window.mkDevicesList) {
+      window.mkDevicesList.forEach(d => mkDevicesMap[d.key] = d.label);
+  }
 
-    document.getElementById(`mem-used-${suffix}`).textContent  = Math.round(used / 1048576);
-    document.getElementById(`mem-total-${suffix}`).textContent = Math.round(total / 1048576);
-    document.getElementById(`mem-pct-${suffix}`).textContent   = memPct + '%';
-    gsap.to(`#mem-bar-${suffix}`, { width: memPct + '%', duration: .6, ease: 'power2.out' });
+  for (const key of Object.keys(r)) {
+      const obj = r[key];
+      if (!obj || Object.keys(obj).length === 0) continue;
 
-    const u = obj['uptime'] || '';
-    let d=0,h=0,m=0,s=0;
-    const wk=u.match(/(\d+)w/); if(wk) d+=+wk[1]*7;
-    const dy=u.match(/(\d+)d/); if(dy) d+=+dy[1];
-    const hr=u.match(/(\d+)h/); if(hr) h=+hr[1];
-    const mn=u.match(/(\d+)m/); if(mn) m=+mn[1];
-    const sc=u.match(/(\d+)s/); if(sc) s=+sc[1];
+      const safeId = key.toLowerCase();
+      
+      let box = document.getElementById(`sys-status-${safeId}`);
+      if (!box) {
+          const label = mkDevicesMap[key] || key;
+          box = document.createElement('div');
+          box.id = `sys-status-${safeId}`;
+          box.style = "background:var(--card-bg);border:1px solid var(--border-color);border-radius:12px;padding:16px;";
+          box.innerHTML = `
+          <h3 style="font-size:0.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">
+            System Status (${label})</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;">
+            <div style="padding:12px;background:rgba(255,255,255,0.02);border-radius:8px;">
+              <p style="font-size:.7rem;color:var(--muted);margin-bottom:6px;">CPU Load</p>
+              <div style="display:flex;align-items:end;gap:4px;margin-bottom:8px;">
+                <span id="cpu-val-${safeId}" style="font-size:1.4rem;font-weight:700;color:#fff;">0</span>
+                <span style="font-size:.8rem;color:var(--muted);margin-bottom:3px;">%</span>
+              </div>
+              <div style="height:4px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden;">
+                <div id="cpu-bar-${safeId}" style="height:100%;width:0%;background:#3b82f6;"></div>
+              </div>
+            </div>
+            <div style="padding:12px;background:rgba(255,255,255,0.02);border-radius:8px;">
+              <p style="font-size:.7rem;color:var(--muted);margin-bottom:6px;">Memory Used</p>
+              <div style="display:flex;align-items:end;gap:4px;margin-bottom:8px;">
+                <span id="mem-pct-${safeId}" style="font-size:1.4rem;font-weight:700;color:#fff;">0%</span>
+              </div>
+              <p style="font-size:.65rem;color:var(--muted);margin-bottom:6px;"><span id="mem-used-${safeId}">0</span> /
+                <span id="mem-total-${safeId}">0</span> MB</p>
+              <div style="height:4px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden;">
+                <div id="mem-bar-${safeId}" style="height:100%;width:0%;background:#a855f7;"></div>
+              </div>
+            </div>
+            <div style="padding:12px;background:rgba(255,255,255,0.02);border-radius:8px;">
+              <p style="font-size:.7rem;color:var(--muted);margin-bottom:6px;">Uptime</p>
+              <div id="uptime-val-${safeId}" style="font-size:1rem;font-weight:600;color:#38bdf8;">0d 00:00:00</div>
+              <div style="display:flex;gap:8px;margin-top:6px;">
+                <div style="text-align:center;"><span id="up-d-${safeId}" style="display:block;font-size:1.1rem;font-weight:700;color:#fff;">0</span><span style="font-size:.6rem;color:var(--muted);">Hari</span></div>
+                <div style="text-align:center;"><span id="up-h-${safeId}" style="display:block;font-size:1.1rem;font-weight:700;color:#fff;">0</span><span style="font-size:.6rem;color:var(--muted);">Jam</span></div>
+                <div style="text-align:center;"><span id="up-m-${safeId}" style="display:block;font-size:1.1rem;font-weight:700;color:#fff;">0</span><span style="font-size:.6rem;color:var(--muted);">Mnt</span></div>
+              </div>
+            </div>
+          </div>
+          `;
+          container.appendChild(box);
+          gsap.fromTo(box, { opacity: 0, y: 15 }, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' });
+      }
 
-    document.getElementById(`uptime-val-${suffix}`).textContent = `${d}d ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-    document.getElementById(`up-d-${suffix}`).textContent = d;
-    document.getElementById(`up-h-${suffix}`).textContent = h;
-    document.getElementById(`up-m-${suffix}`).textContent = m;
-  };
+      const cpu    = parseInt(obj['cpu-load'] || 0);
+      const total  = parseInt(obj['total-memory'] || 1);
+      const free   = parseInt(obj['free-memory'] || 0);
+      const used   = total - free;
+      const memPct = Math.round((used / total) * 100);
 
-  applyRes(r.main, 'main');
-  applyRes(r.r42, 'r42');
-  applyRes(r.r50, 'r50');
-  applyRes(r.r155, 'r155');
+      animateNumber(`cpu-val-${safeId}`, cpu);
+      gsap.to(`#cpu-bar-${safeId}`, { width: cpu + '%', duration: .6, ease: 'power2.out' });
+      const bar = document.getElementById(`cpu-bar-${safeId}`);
+      if (bar) {
+          bar.style.background = cpu > 80 ? 'linear-gradient(90deg,#ef4444,#f87171)' :
+                                 cpu > 50 ? 'linear-gradient(90deg,#f59e0b,#fbbf24)' :
+                                            'linear-gradient(90deg,#3b82f6,#60a5fa)';
+      }
+
+      document.getElementById(`mem-used-${safeId}`).textContent  = Math.round(used / 1048576);
+      document.getElementById(`mem-total-${safeId}`).textContent = Math.round(total / 1048576);
+      document.getElementById(`mem-pct-${safeId}`).textContent   = memPct + '%';
+      gsap.to(`#mem-bar-${safeId}`, { width: memPct + '%', duration: .6, ease: 'power2.out' });
+
+      const u = obj['uptime'] || '';
+      let d=0,h=0,m=0,s=0;
+      const wk=u.match(/(\d+)w/); if(wk) d+=+wk[1]*7;
+      const dy=u.match(/(\d+)d/); if(dy) d+=+dy[1];
+      const hr=u.match(/(\d+)h/); if(hr) h=+hr[1];
+      const mn=u.match(/(\d+)m/); if(mn) m=+mn[1];
+      const sc=u.match(/(\d+)s/); if(sc) s=+sc[1];
+
+      document.getElementById(`uptime-val-${safeId}`).textContent = `${d}d ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      if (document.getElementById(`up-d-${safeId}`)) {
+          document.getElementById(`up-d-${safeId}`).textContent = d;
+          document.getElementById(`up-h-${safeId}`).textContent = h;
+          document.getElementById(`up-m-${safeId}`).textContent = m;
+      }
+  }
 }
 
 /* ─── Fetch: Health ──────────────────────────────────────────────────────── */

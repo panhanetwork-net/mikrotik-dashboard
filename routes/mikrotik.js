@@ -64,54 +64,59 @@ router.get('/status', async (req, res) => {
 });
 
 /* ─── GET /api/mikrotik/resources ──────────────────────────────────────────── */
+function getDevicesList() {
+  const devices = [{ key: 'MAIN', label: '.31 Utama (CCR)', host: (process.env.MIKROTIK_HOST||'').split(':')[0], port: parseInt(process.env.MIKROTIK_API_PORT||'56988'), user: process.env.MIKROTIK_USER||'', pass: process.env.MIKROTIK_PASS||'', webPort: 80 }];
+  const leg = ['BRS', 'R50', 'R155'];
+  leg.forEach(k => {
+    if (process.env[`${k}_HOST`]) {
+      devices.push({ key: k, label: process.env[`MK_DEVICE_${k}_LABEL`] || k, host: process.env[`${k}_HOST`].split(':')[0], port: parseInt(process.env[`${k}_API_PORT`]||'8728'), user: process.env[`${k}_USER`]||'', pass: process.env[`${k}_PASS`]||'', webPort: parseInt(process.env[`${k}_WEB_PORT`]||'80') });
+    }
+  });
+  for (const key of Object.keys(process.env)) {
+    const match = key.match(/^MK_DEVICE_([A-Z0-9_]+)_HOST$/);
+    if (match) {
+      const k = match[1];
+      devices.push({ key: k, label: process.env[`MK_DEVICE_${k}_LABEL`] || k, host: process.env[key].split(':')[0], port: parseInt(process.env[`MK_DEVICE_${k}_API_PORT`]||'8728'), user: process.env[`MK_DEVICE_${k}_USER`]||'', pass: process.env[`MK_DEVICE_${k}_PASS`]||'', webPort: parseInt(process.env[`MK_DEVICE_${k}_WEB_PORT`]||'80') });
+    }
+  }
+  return devices;
+}
+
 router.get('/resources', async (req, res) => {
   try {
-    const pMain = api('/system/resource/print').catch(() => []);
-    
-    const fetchRes = async (prefix) => {
-      const host = process.env[`${prefix}_HOST`];
-      if (!host) return [];
-      const apiPort = parseInt(process.env[`${prefix}_API_PORT`] || '8728');
-      const wwwPort = parseInt(process.env[`${prefix}_WWW_PORT`] || '80');
-      const user = process.env[`${prefix}_USER`] || process.env.MIKROTIK_USER || 'admin';
-      const pass = process.env[`${prefix}_PASS`] || process.env.MIKROTIK_PASS || '';
-
-      return runCommand(host, apiPort, user, pass, '/system/resource/print')
+    const devices = getDevicesList();
+    const fetchRes = async (d) => {
+      if (d.key === 'MAIN') return api('/system/resource/print').catch(() => []);
+      
+      return runCommand(d.host, d.port, d.user, d.pass, '/system/resource/print')
         .catch(e => ({ error: e })).then(async (resObj) => {
           if (resObj && resObj.error) {
              try {
-               const auth = Buffer.from(user + ':' + pass).toString('base64');
-               const r = await fetch(`http://${host}:${wwwPort}/rest/system/resource`, {
+               const auth = Buffer.from(d.user + ':' + d.pass).toString('base64');
+               const r = await fetch(`http://${d.host}:${d.webPort}/rest/system/resource`, {
                  headers: { 'Authorization': 'Basic ' + auth }
                });
                const text = await r.text();
                try {
                  const j = JSON.parse(text);
                  return Array.isArray(j) ? j : [j];
-               } catch (e) {
-                 return [];
-               }
-             } catch (e) {
-               return [];
-             }
+               } catch (e) { return []; }
+             } catch (e) { return []; }
           }
           return resObj;
         });
     };
 
-    const [mainRows, r42Rows, r50Rows, r155Rows] = await Promise.all([
-      pMain,
-      fetchRes('BRS'),
-      fetchRes('R50'),
-      fetchRes('R155')
-    ]);
+    const promises = devices.map(d => fetchRes(d));
+    const results = await Promise.all(promises);
     
-    return res.json({
-      main: (Array.isArray(mainRows) ? mainRows[0] : null) || {},
-      r42:  (Array.isArray(r42Rows) ? r42Rows[0] : null) || {},
-      r50:  (Array.isArray(r50Rows) ? r50Rows[0] : null) || {},
-      r155: (Array.isArray(r155Rows) ? r155Rows[0] : null) || {}
+    const out = {};
+    devices.forEach((d, idx) => {
+      const rows = results[idx];
+      out[d.key] = (Array.isArray(rows) && rows[0]) ? rows[0] : {};
     });
+    
+    return res.json(out);
   } catch (err) {
     return res.status(502).json({ error: err.message });
   }
