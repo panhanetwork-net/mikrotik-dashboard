@@ -54,15 +54,8 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use('/api/mikrotik', requireAuth, mikrotikRouter);
-app.use('/api/alerts', requireAuth, alertsRouter);
-app.use('/api/history', requireAuth, historyRouter);
-app.use('/api/ping', requireAuth, pingRouter);
-app.use('/api/snmp', requireAuth, snmpRouter);
-app.use('/api/settings', requireAuth, settingsRouter);
-
-// ─── Public Config (no auth required — needed before login for chart init) ───
-app.use('/api/mikrotik/public-config', (req, res) => {
+// ─── Public Config (no auth required — registered BEFORE requireAuth) ─────
+app.get('/api/mikrotik/public-config', (req, res) => {
   const customGraphs = [];
   for (const key of Object.keys(process.env)) {
     const match = key.match(/^CUSTOM_GRAPH_([A-Z0-9_]+)_DEV$/);
@@ -81,6 +74,13 @@ app.use('/api/mikrotik/public-config', (req, res) => {
     graphs: customGraphs,
   });
 });
+
+app.use('/api/mikrotik', requireAuth, mikrotikRouter);
+app.use('/api/alerts', requireAuth, alertsRouter);
+app.use('/api/history', requireAuth, historyRouter);
+app.use('/api/ping', requireAuth, pingRouter);
+app.use('/api/snmp', requireAuth, snmpRouter);
+app.use('/api/settings', requireAuth, settingsRouter);
 
 // ─── Technitium DNS Proxy ───────────────────────────────────────────────────
 app.get('/api/technitium/chart', requireAuth, async (req, res) => {
