@@ -50,6 +50,7 @@ function loadDevices() {
       community: process.env[`SNMP_DEVICE_${key}_COMMUNITY`] || 'public',
       label:     process.env[`SNMP_DEVICE_${key}_LABEL`]     || `Device ${key}`,
       port:      parseInt(process.env[`SNMP_DEVICE_${key}_PORT`] || '161'),
+      disabled:  process.env[`SNMP_DEVICE_${key}_DISABLED`]  || false,
     };
   }
   return devices;
@@ -361,6 +362,8 @@ router.get('/sysinfo/:key', async (req, res) => {
   const devices = loadDevices();
   const dev = devices[req.params.key.toUpperCase()];
   if (!dev) return res.status(404).json({ error: 'Device not found' });
+  if (dev.disabled) return res.json({ device: { key: dev.key, label: dev.label, host: dev.host }, error: dev.disabled });
+  
   const info = await getSystemInfo(dev.host, dev.port, dev.community);
   res.json({ device: { key: dev.key, label: dev.label, host: dev.host }, ...info });
 });
@@ -370,6 +373,8 @@ router.get('/interfaces/:key', async (req, res) => {
   const devices = loadDevices();
   const dev = devices[req.params.key.toUpperCase()];
   if (!dev) return res.status(404).json({ error: 'Device not found' });
+  if (dev.disabled) return res.json({ error: dev.disabled, interfaces: [] });
+
   try {
     const [sysinfo, ifaces] = await Promise.all([
       getSystemInfo(dev.host, dev.port, dev.community),
@@ -386,6 +391,7 @@ router.get('/all', async (req, res) => {
   const devices = loadDevices();
   const results = await Promise.all(
     Object.values(devices).map(async dev => {
+      if (dev.disabled) return { key: dev.key, label: dev.label, host: dev.host, error: dev.disabled };
       const info = await getSystemInfo(dev.host, dev.port, dev.community);
       return { key: dev.key, label: dev.label, host: dev.host, ...info };
     })
