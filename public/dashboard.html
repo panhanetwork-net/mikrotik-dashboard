@@ -1049,7 +1049,10 @@
     <section id="section-snmp" class="tab-section">
 
       <!-- Device Summary Cards -->
-      <div id="snmp-device-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:20px;"></div>
+      <div id="snmp-device-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:16px;"></div>
+
+      <!-- Interface Stats (filled by JS after iface load) -->
+      <div id="snmp-iface-stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;"></div>
 
       <!-- Interface List -->
       <div class="dash-card fade-up">
@@ -1065,9 +1068,6 @@
             <span id="snmp-iface-count" style="font-size:.72rem;color:var(--muted);"></span>
           </div>
         </div>
-
-        <!-- Interface stat summary cards -->
-        <div id="snmp-iface-stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;"></div>
 
         <div style="overflow-x:auto;">
           <table class="dash-table" style="width:100%;">
