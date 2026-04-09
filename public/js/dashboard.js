@@ -1336,6 +1336,9 @@ async function loadSnmpInterfaces() {
 
 // ═════════════════════ GUI SETTINGS MODAL ═════════════════════
 
+let dynamicMkCount = 0;
+let dynamicSnmpCount = 0;
+
 function switchSettingsTab(tab) {
   document.querySelectorAll('.settings-tab-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.settings-pane').forEach(p => p.style.display = 'none');
@@ -1344,21 +1347,138 @@ function switchSettingsTab(tab) {
   document.getElementById(`settings-${tab}`).style.display = 'block';
 }
 
+function buildMkBlock(key, label, host, apiPort, webPort, userStr, disabled) {
+  const isMain = key === 'MIKROTIK';
+  const namePrefix = isMain ? 'MIKROTIK' : `MK_DEVICE_${key}`;
+  
+  return `
+    <div class="mk-node-block" style="padding:12px;background:var(--bg-color);border:1px solid var(--border-color);border-radius:8px;position:relative;">
+      ${!isMain ? `<button type="button" onclick="this.parentElement.remove()" style="position:absolute;top:8px;right:8px;background:none;border:none;color:#ef4444;cursor:pointer;font-size:1rem;line-height:1;">&times;</button>` : ''}
+      <div style="margin-bottom:12px;">
+        <label style="display:block;font-size:.7rem;color:#94a3b8;margin-bottom:4px;">Identifier Key (Tanpa Spasi, contoh: R50)</label>
+        <input type="text" class="login-input" value="${isMain ? 'MAIN' : key}" ${isMain ? 'disabled' : `name="dyn_mk_key_${dynamicMkCount}"`}  style="padding:8px;font-size:.8rem;background:${isMain?'transparent':'rgba(255,255,255,0.05)'};color:${isMain?'var(--muted)':'#e2e8f0'};" required>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="display:block;font-size:.7rem;color:#94a3b8;margin-bottom:4px;">Label Dashboard</label>
+        <input type="text" ${isMain ? '' : `name="dyn_mk_lbl_${dynamicMkCount}"`} class="login-input" placeholder="e.g. .50 BRS Utama" value="${label}" style="padding:8px;font-size:.8rem;" ${isMain ? 'disabled title="MAIN default"' : 'required'}>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="display:block;font-size:.7rem;color:#94a3b8;margin-bottom:4px;">IP / Host</label>
+        <input type="text" name="${namePrefix}_HOST" class="login-input" value="${host}" style="padding:8px;font-size:.8rem;" required>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div>
+          <label style="display:block;font-size:.7rem;color:#94a3b8;margin-bottom:4px;">API Port</label>
+          <input type="number" name="${namePrefix}_API_PORT" class="login-input" value="${apiPort}" style="padding:8px;font-size:.8rem;" required>
+        </div>
+        <div>
+          <label style="display:block;font-size:.7rem;color:#94a3b8;margin-bottom:4px;">Web Port (Grafik)</label>
+          <input type="number" name="${namePrefix}_WEB_PORT" class="login-input" value="${webPort}" style="padding:8px;font-size:.8rem;" ${isMain ? '' : 'placeholder="Opsional"'}>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <label style="display:block;font-size:.7rem;color:#94a3b8;margin-bottom:4px;">Username</label>
+          <input type="text" name="${namePrefix}_USER" class="login-input" value="${userStr}" style="padding:8px;font-size:.8rem;" required>
+        </div>
+        <div>
+          <label style="display:block;font-size:.7rem;color:#94a3b8;margin-bottom:4px;">Password</label>
+          <input type="password" name="${namePrefix}_PASS" class="login-input" style="padding:8px;font-size:.8rem;" placeholder="********">
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function buildSnmpBlock(key, label, host, comm) {
+  return `
+    <div class="snmp-node-block" style="padding:12px;background:var(--bg-color);border:1px solid var(--border-color);border-radius:8px;position:relative;">
+      <button type="button" onclick="this.parentElement.remove()" style="position:absolute;top:8px;right:8px;background:none;border:none;color:#ef4444;cursor:pointer;font-size:1rem;line-height:1;">&times;</button>
+      <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;margin-bottom:12px;">
+        <div>
+          <label style="display:block;font-size:.7rem;color:#94a3b8;margin-bottom:4px;">Key (e.g. OLT1)</label>
+          <input type="text" name="dyn_snmp_key_${dynamicSnmpCount}" class="login-input" value="${key}" style="padding:8px;font-size:.8rem;" required>
+        </div>
+        <div>
+          <label style="display:block;font-size:.7rem;color:#94a3b8;margin-bottom:4px;">Label (e.g. OLT ZTE Arah)</label>
+          <input type="text" name="dyn_snmp_lbl_${dynamicSnmpCount}" class="login-input" value="${label}" style="padding:8px;font-size:.8rem;" required>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <label style="display:block;font-size:.7rem;color:#94a3b8;margin-bottom:4px;">IP Target</label>
+          <input type="text" name="dyn_snmp_host_${dynamicSnmpCount}" class="login-input" value="${host}" style="padding:8px;font-size:.8rem;" required>
+        </div>
+        <div>
+          <label style="display:block;font-size:.7rem;color:#94a3b8;margin-bottom:4px;">Community (SNMP v2c)</label>
+          <input type="text" name="dyn_snmp_comm_${dynamicSnmpCount}" class="login-input" value="${comm}" style="padding:8px;font-size:.8rem;" required>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function addMikrotikNode() {
+  dynamicMkCount++;
+  document.getElementById('dyn-mikrotik-list').insertAdjacentHTML('beforeend', buildMkBlock('', '', '', '8728', '', ''));
+}
+
+function addSnmpNode() {
+  dynamicSnmpCount++;
+  document.getElementById('dyn-snmp-list').insertAdjacentHTML('beforeend', buildSnmpBlock('', '', '', 'public'));
+}
+
 async function loadSettings() {
   try {
     const res = await fetch('/api/settings', { headers: { 'Authorization': getAuthHeader() } });
     if (res.status === 401 || res.status === 403) return logout();
     const data = await res.json();
     
-    // Auto-fill all inputs based on backend keys
+    // Auto-fill standard inputs
     for (const [key, val] of Object.entries(data)) {
       const input = document.getElementById(`s_${key}`);
       if (input) {
         if (input.type === 'password' && val === '********') {
-          input.value = ''; // Let placeholder show, don't submit placeholder
+          input.value = ''; 
         } else {
           input.value = val;
         }
+      }
+    }
+
+    // Build MikroTik List
+    const mkContainer = document.getElementById('dyn-mikrotik-list');
+    mkContainer.innerHTML = '';
+    const mainHost = data.MIKROTIK_HOST || '';
+    mkContainer.innerHTML += buildMkBlock('MIKROTIK', '.31 Utama (CCR)', mainHost, data.MIKROTIK_API_PORT || '56988', data.MIKROTIK_WEB_PORT || '80', data.MIKROTIK_USER || '');
+    
+    // Legacy mapping (BRS, R50, etc into dynamic slots for editing)
+    const leg = ['BRS', 'R50', 'R155'];
+    leg.forEach(k => {
+      if (data[`${k}_HOST`]) {
+        dynamicMkCount++;
+        mkContainer.innerHTML += buildMkBlock(k, data[`MK_DEVICE_${k}_LABEL`] || k, data[`${k}_HOST`], data[`${k}_API_PORT`], data[`${k}_WEB_PORT`]||'', data[`${k}_USER`]);
+      }
+    });
+
+    for (const k of Object.keys(data)) {
+      const match = k.match(/^MK_DEVICE_([A-Z0-9_]+)_HOST$/);
+      if (match) {
+        dynamicMkCount++;
+        const pKey = match[1];
+        mkContainer.innerHTML += buildMkBlock(pKey, data[`MK_DEVICE_${pKey}_LABEL`], data[k], data[`MK_DEVICE_${pKey}_API_PORT`], data[`MK_DEVICE_${pKey}_WEB_PORT`], data[`MK_DEVICE_${pKey}_USER`]);
+      }
+    }
+
+    // Build SNMP List
+    const snmpContainer = document.getElementById('dyn-snmp-list');
+    snmpContainer.innerHTML = '';
+    for (const k of Object.keys(data)) {
+      const match = k.match(/^SNMP_DEVICE_([A-Z0-9_]+)_HOST$/);
+      if (match) {
+        dynamicSnmpCount++;
+        const pKey = match[1];
+        snmpContainer.innerHTML += buildSnmpBlock(pKey, data[`SNMP_DEVICE_${pKey}_LABEL`], data[k], data[`SNMP_DEVICE_${pKey}_COMMUNITY`]);
       }
     }
   } catch (err) {
@@ -1376,12 +1496,57 @@ async function saveSettings(e) {
   const fd = new FormData(form);
   const payload = {};
   
+  // Array management: Instruct backend to wipe all dynamic keys before assigning from form
+  payload._DELETE_PREFIXES = ['MK_DEVICE_', 'SNMP_DEVICE_', 'BRS_HOST', 'R50_HOST', 'R155_HOST', 'BRS_API_PORT', 'R50_API_PORT', 'R155_API_PORT', 'BRS_USER', 'R50_USER', 'R155_USER'];
+
+  const mkPairs = {};
+  const snmpPairs = {};
+
   fd.forEach((value, key) => {
-    // Only send fields that aren't empty (avoids overriding passwords with empty strings)
-    if (value.trim() !== '') {
-      payload[key] = value.trim();
+    const val = value.trim();
+    if (val === '') return;
+
+    // Intercept dynamically generated names and turn them into standardized prefixes
+    if (key.startsWith('dyn_mk_key_')) {
+      const idx = key.replace('dyn_mk_key_', '');
+      mkPairs[idx] = mkPairs[idx] || {};
+      mkPairs[idx].key = val.replace(/[^A-Z0-9_]/gi, '').toUpperCase();
+    } else if (key.startsWith('dyn_mk_lbl_')) {
+      const idx = key.replace('dyn_mk_lbl_', '');
+      mkPairs[idx] = mkPairs[idx] || {};
+      mkPairs[idx].label = val;
+    } else if (key.startsWith('dyn_snmp_')) {
+      // dyn_snmp_key_1, dyn_snmp_lbl_1, dyn_snmp_host_1, dyn_snmp_comm_1
+      const parts = key.split('_');
+      const prop = parts[2];
+      const idx = parts[3];
+      snmpPairs[idx] = snmpPairs[idx] || {};
+      if (prop === 'key') snmpPairs[idx].key = val.replace(/[^A-Z0-9_]/gi, '').toUpperCase();
+      if (prop === 'lbl') snmpPairs[idx].label = val;
+      if (prop === 'host') snmpPairs[idx].host = val;
+      if (prop === 'comm') snmpPairs[idx].comm = val;
+    } else {
+      payload[key] = val; // MIKROTIK_HOST, MK_DEVICE_XYZ_... inputs mapped natively
     }
   });
+
+  // Re-inject mapped pairs into payload
+  for (const idx of Object.keys(mkPairs)) {
+    const m = mkPairs[idx];
+    if (m.key) {
+      payload[`MK_DEVICE_${m.key}_LABEL`] = m.label || m.key;
+      // Note: The rest of MK_DEVICE_<KEY>_HOST is already in payload because the inputs are dynamically named
+    }
+  }
+
+  for (const idx of Object.keys(snmpPairs)) {
+    const p = snmpPairs[idx];
+    if (p.key && p.host) {
+      payload[`SNMP_DEVICE_${p.key}_HOST`] = p.host;
+      payload[`SNMP_DEVICE_${p.key}_COMMUNITY`] = p.comm || 'public';
+      payload[`SNMP_DEVICE_${p.key}_LABEL`] = p.label || p.key;
+    }
+  }
 
   try {
     const res = await fetch('/api/settings', {

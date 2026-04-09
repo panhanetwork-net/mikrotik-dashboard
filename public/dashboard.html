@@ -1135,40 +1135,31 @@
       <div style="padding:20px;max-height:70vh;overflow-y:auto;">
         
         <!-- Tab Headers -->
-        <div style="display:flex;gap:12px;margin-bottom:16px;border-bottom:1px solid var(--border-color);padding-bottom:12px;">
-          <button class="settings-tab-btn active" id="st-mikrotik" onclick="switchSettingsTab('mikrotik')" style="background:none;border:none;color:var(--accent);font-size:.8rem;font-weight:600;cursor:pointer;">MikroTik</button>
-          <button class="settings-tab-btn" id="st-telegram" onclick="switchSettingsTab('telegram')" style="background:none;border:none;color:var(--muted);font-size:.8rem;font-weight:600;cursor:pointer;">Telegram Alert</button>
-          <button class="settings-tab-btn" id="st-system" onclick="switchSettingsTab('system')" style="background:none;border:none;color:var(--muted);font-size:.8rem;font-weight:600;cursor:pointer;">System</button>
+        <div style="display:flex;gap:12px;margin-bottom:16px;border-bottom:1px solid var(--border-color);padding-bottom:12px;overflow-x:auto;">
+          <button class="settings-tab-btn active" id="st-mikrotik" onclick="switchSettingsTab('mikrotik')" style="background:none;border:none;color:var(--accent);font-size:.8rem;font-weight:600;cursor:pointer;white-space:nowrap;">MikroTik Devices</button>
+          <button class="settings-tab-btn" id="st-snmp" onclick="switchSettingsTab('snmp')" style="background:none;border:none;color:var(--muted);font-size:.8rem;font-weight:600;cursor:pointer;white-space:nowrap;">SNMP Targets</button>
+          <button class="settings-tab-btn" id="st-telegram" onclick="switchSettingsTab('telegram')" style="background:none;border:none;color:var(--muted);font-size:.8rem;font-weight:600;cursor:pointer;white-space:nowrap;">Telegram Alert</button>
+          <button class="settings-tab-btn" id="st-system" onclick="switchSettingsTab('system')" style="background:none;border:none;color:var(--muted);font-size:.8rem;font-weight:600;cursor:pointer;white-space:nowrap;">System</button>
         </div>
 
         <form id="settings-form" onsubmit="saveSettings(event)">
           
           <!-- Tab Content: MikroTik -->
           <div id="settings-mikrotik" class="settings-pane" style="display:block;">
-            <div style="margin-bottom:12px;">
-              <label style="display:block;font-size:.75rem;color:#94a3b8;margin-bottom:6px;">MikroTik IP / Host</label>
-              <input type="text" name="MK_HOST" id="s_MK_HOST" class="login-input" style="padding:8px;font-size:.8rem;" required>
+            <p style="font-size:.7rem;color:var(--muted);margin-bottom:16px;">Tambahkan router MikroTik yang ingin dipantau. <b>Key "MAIN" wajib ada</b> sebagai router utama (Gateway Utama).</p>
+            <div id="dyn-mikrotik-list" style="display:flex;flex-direction:column;gap:16px;">
+              <!-- JS Injected -->
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-              <div>
-                <label style="display:block;font-size:.75rem;color:#94a3b8;margin-bottom:6px;">API Port</label>
-                <input type="number" name="MK_API_PORT" id="s_MK_API_PORT" class="login-input" style="padding:8px;font-size:.8rem;" required>
-              </div>
-              <div>
-                <label style="display:block;font-size:.75rem;color:#94a3b8;margin-bottom:6px;">Web Port (Graph)</label>
-                <input type="number" name="MK_WEB_PORT" id="s_MK_WEB_PORT" class="login-input" style="padding:8px;font-size:.8rem;" required>
-              </div>
+            <button type="button" onclick="addMikrotikNode()" style="margin-top:16px;width:100%;padding:10px;background:rgba(59,130,246,.1);border:1px dashed #3b82f6;color:#60a5fa;border-radius:8px;font-size:.75rem;cursor:pointer;">+ Tambah MikroTik Router</button>
+          </div>
+
+          <!-- Tab Content: SNMP -->
+          <div id="settings-snmp" class="settings-pane" style="display:none;">
+            <p style="font-size:.7rem;color:var(--muted);margin-bottom:16px;">Tambahkan IP SNMP OLT, Switch, atau Router lain yang ingin dipantau grafiknya.</p>
+            <div id="dyn-snmp-list" style="display:flex;flex-direction:column;gap:16px;">
+              <!-- JS Injected -->
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-              <div>
-                <label style="display:block;font-size:.75rem;color:#94a3b8;margin-bottom:6px;">Username</label>
-                <input type="text" name="MK_USER" id="s_MK_USER" class="login-input" style="padding:8px;font-size:.8rem;" required>
-              </div>
-              <div>
-                <label style="display:block;font-size:.75rem;color:#94a3b8;margin-bottom:6px;">Password</label>
-                <input type="password" name="MK_PASS" id="s_MK_PASS" class="login-input" style="padding:8px;font-size:.8rem;" placeholder="********">
-              </div>
-            </div>
+            <button type="button" onclick="addSnmpNode()" style="margin-top:16px;width:100%;padding:10px;background:rgba(59,130,246,.1);border:1px dashed #3b82f6;color:#60a5fa;border-radius:8px;font-size:.75rem;cursor:pointer;">+ Tambah SNMP Target</button>
           </div>
 
           <!-- Tab Content: Telegram -->
