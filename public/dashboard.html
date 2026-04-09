@@ -1061,11 +1061,13 @@
           <div style="display:flex;align-items:center;gap:8px;">
             <select id="snmp-device-select" onchange="loadSnmpInterfaces()"
               style="background:var(--card);border:1px solid var(--border);color:#e2e8f0;font-size:.75rem;border-radius:8px;padding:4px 10px;outline:none;cursor:pointer;">
-              <option value="">-- Pilih Perangkat --</option>
             </select>
             <span id="snmp-iface-count" style="font-size:.72rem;color:var(--muted);"></span>
           </div>
         </div>
+
+        <!-- Interface stat summary cards -->
+        <div id="snmp-iface-stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;"></div>
 
         <div style="overflow-x:auto;">
           <table class="dash-table" style="width:100%;">

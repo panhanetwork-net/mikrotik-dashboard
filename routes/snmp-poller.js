@@ -168,6 +168,10 @@ function decodeValue(type, buf) {
       return n;
     }
     case 0x05: return null; // NULL
+    // SNMP v2c exception types — suppress gracefully
+    case 0x80: return undefined; // noSuchObject
+    case 0x81: return undefined; // noSuchInstance
+    case 0x82: return undefined; // endOfMibView
     default:   return buf.toString('hex');
   }
 }
@@ -179,9 +183,10 @@ function parseVarBinds(buf) {
     if (buf[i] !== 0x30) break;
     i++;
     const { len: seqLen, offset: so } = decodeLength(buf, i);
+    const seqEnd = so + seqLen;
     i = so;
     // OID
-    if (buf[i] !== 0x06) { i += seqLen; continue; }
+    if (buf[i] !== 0x06) { i = seqEnd; continue; }
     i++;
     const { len: oidLen, offset: oo } = decodeLength(buf, i);
     i = oo;
@@ -193,7 +198,8 @@ function parseVarBinds(buf) {
     i = vo;
     const value = decodeValue(valType, buf.slice(i, i + valLen));
     i += valLen;
-    result.push({ oid, value });
+    // Only include defined values (skip SNMP exception types)
+    if (value !== undefined) result.push({ oid, value });
   }
   return result;
 }

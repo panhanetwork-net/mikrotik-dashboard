@@ -1120,18 +1120,21 @@ async function fetchSnmpDevices() {
     const devices = await fetch('/api/snmp/devices').then(r => r.json());
     snmpDevices = Array.isArray(devices) ? devices : [];
 
-    // Populate device select dropdown
+    // Populate device select (no placeholder — auto-select first)
     const sel = document.getElementById('snmp-device-select');
     if (sel) {
-      sel.innerHTML = '<option value="">-- Pilih Perangkat --</option>';
+      const prevKey = sel.value;
+      sel.innerHTML = '';
       snmpDevices.forEach(d => {
         const opt = document.createElement('option');
         opt.value = d.key;
         opt.textContent = `${d.label} (${d.host})`;
         sel.appendChild(opt);
       });
-      // Auto-select first device
-      if (snmpDevices.length && !sel.value) {
+      // Restore previous selection, or pick first
+      if (prevKey && snmpDevices.find(d => d.key === prevKey)) {
+        sel.value = prevKey;
+      } else if (snmpDevices.length) {
         sel.value = snmpDevices[0].key;
         loadSnmpInterfaces();
       }
@@ -1157,14 +1160,14 @@ function renderSnmpDeviceCards(devices) {
     const statusColor = online ? '#22c55e' : '#ef4444';
     const uptime = online ? fmtSnmpUptime(d.uptime_s || 0) : '—';
     return `
-      <div class="dash-card fade-up" style="padding:16px;">
+      <div class="dash-card fade-up" style="padding:16px;cursor:pointer;" onclick="document.getElementById('snmp-device-select').value='${d.key}';loadSnmpInterfaces();">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
           <div>
             <div style="font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;">SNMP Device</div>
             <div style="font-size:1rem;font-weight:700;color:#e2e8f0;">${d.label}</div>
             <div style="font-family:monospace;font-size:.72rem;color:var(--muted);">${d.host}</div>
           </div>
-          <span style="background:${statusColor}22;border:1px solid ${statusColor}44;color:${statusColor};font-size:.68rem;font-weight:600;padding:2px 8px;border-radius:6px;">
+          <span style="background:${statusColor}22;border:1px solid ${statusColor}44;color:${statusColor};font-size:.68rem;font-weight:600;padding:2px 8px;border-radius:6px;white-space:nowrap;">
             ${online ? '● Online' : '● Offline'}
           </span>
         </div>
@@ -1185,6 +1188,31 @@ function renderSnmpDeviceCards(devices) {
   }).join('');
 }
 
+function renderSnmpIfaceStats(ifaces) {
+  const container = document.getElementById('snmp-iface-stats');
+  if (!container) return;
+  const total = ifaces.length;
+  const upCount    = ifaces.filter(i => i.status === 'up').length;
+  const downCount  = ifaces.filter(i => i.status === 'down').length;
+  const vlanCount  = ifaces.filter(i => (i.alias || '').toLowerCase().includes('vlan') || (i.name || '').toLowerCase().includes('vlan')).length;
+  const stats = [
+    { label: 'Total Interface', value: total,     color: '#3b82f6' },
+    { label: 'Up',              value: upCount,   color: '#22c55e' },
+    { label: 'Down',            value: downCount, color: '#ef4444' },
+    { label: 'VLAN / vlanif',   value: vlanCount, color: '#a855f7' },
+  ];
+  container.innerHTML = stats.map(s => `
+    <div style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:14px;">
+      <div style="width:36px;height:36px;border-radius:50%;background:${s.color}22;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <span style="font-size:1rem;font-weight:700;color:${s.color};">${s.value}</span>
+      </div>
+      <div>
+        <div style="font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;">${s.label}</div>
+        <div style="font-size:.85rem;font-weight:600;color:#e2e8f0;">${s.value} entri</div>
+      </div>
+    </div>`).join('');
+}
+
 async function loadSnmpInterfaces() {
   const sel = document.getElementById('snmp-device-select');
   const key = sel ? sel.value : '';
@@ -1192,34 +1220,42 @@ async function loadSnmpInterfaces() {
 
   const tbody = document.getElementById('snmp-iface-tbody');
   const countEl = document.getElementById('snmp-iface-count');
-  if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:32px;">Memuat data interface...</td></tr>`;
+
+  // Anti-blink: only show loading if tbody is currently empty
+  if (tbody && !tbody.querySelector('tr td[data-iface]')) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:32px;">Memuat data interface...</td></tr>`;
+  }
 
   try {
     const data = await fetch(`/api/snmp/interfaces/${key}`).then(r => r.json());
     if (data.error) {
-      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#ef4444;padding:24px;">${data.error}</td></tr>`;
+      if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#ef4444;padding:24px;">${data.error}</td></tr>`;
       return;
     }
 
     const ifaces = data.interfaces || [];
     if (countEl) countEl.textContent = `${ifaces.length} interface`;
 
+    // Update summary stats cards
+    renderSnmpIfaceStats(ifaces);
+
     if (!ifaces.length) {
-      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:32px;">Tidak ada interface ditemukan</td></tr>`;
+      if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:32px;">Tidak ada interface ditemukan</td></tr>`;
       return;
     }
 
-    tbody.innerHTML = ifaces.map(i => {
+    // Anti-blink: build new HTML and only set if it changed
+    const newHtml = ifaces.map(i => {
       const isUp = i.status === 'up';
       const statusDot = `<span style="color:${isUp ? '#22c55e' : '#ef4444'};font-weight:700;">${isUp ? '●' : '○'}</span> ${i.status || '—'}`;
       const alias = i.alias || '';
-      const isVlan = alias.toLowerCase().includes('vlan') || alias.toLowerCase().includes('vlanif');
+      const isVlan = alias.toLowerCase().includes('vlan') || (i.name || '').toLowerCase().includes('vlan');
       const aliasHtml = alias
         ? `<span style="background:${isVlan ? 'rgba(168,85,247,.12)' : 'rgba(59,130,246,.1)'};color:${isVlan ? '#c084fc' : '#60a5fa'};border-radius:5px;padding:1px 6px;font-size:.7rem;font-family:monospace;">${alias}</span>`
         : `<span style="color:var(--muted);">—</span>`;
       const speed = i.speed ? `${i.speed} Mbps` : '—';
       return `<tr>
-        <td style="font-family:monospace;font-size:.75rem;color:var(--muted);padding:7px 12px;">${i.idx}</td>
+        <td data-iface style="font-family:monospace;font-size:.75rem;color:var(--muted);padding:7px 12px;">${i.idx}</td>
         <td style="color:#e2e8f0;font-weight:500;padding:7px 12px;">${i.name || '—'}</td>
         <td style="padding:7px 12px;">${aliasHtml}</td>
         <td style="text-align:right;font-family:monospace;font-size:.75rem;color:var(--muted);padding:7px 12px;">${speed}</td>
@@ -1228,6 +1264,8 @@ async function loadSnmpInterfaces() {
         <td style="text-align:center;font-size:.75rem;padding:7px 12px;">${statusDot}</td>
       </tr>`;
     }).join('');
+
+    if (tbody && tbody.innerHTML !== newHtml) tbody.innerHTML = newHtml;
 
     // Auto-refresh every 30s while on SNMP tab
     clearTimeout(snmpIfaceTimer);
