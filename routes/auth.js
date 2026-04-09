@@ -4,7 +4,7 @@ const { findUser, verifyPassword } = require('../db/database');
 const router = express.Router();
 
 // Router IP dikonfigurasi dari .env, bukan dari form login
-const ROUTER_HOST = process.env.MIKROTIK_HOST || '192.168.20.1:8080';
+const ROUTER_HOST = process.env.MIKROTIK_HOST || '';
 
 // POST /api/login
 router.post('/login', (req, res) => {

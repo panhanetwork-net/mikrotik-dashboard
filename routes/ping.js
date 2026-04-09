@@ -4,7 +4,7 @@ const { runCommand} = require('./routeros-api');
 const router        = express.Router();
 
 // ─── Config ─────────────────────────────────────────────────────────────────
-const PING_TARGET       = '192.148.22.3';
+const PING_TARGET       = process.env.PING_TARGET || '8.8.8.8';
 const PING_INTERVAL     = 15000;          // 15s
 const ALERT_COOLDOWN    = 5 * 60 * 1000; // 5 min between repeat alerts while RTO
 const ALERT_REPEAT_EVERY = 5;            // send alert every N consecutive RTOs
