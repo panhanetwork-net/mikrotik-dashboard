@@ -124,109 +124,117 @@ const { recordTraffic, recordUptime } = require('./routes/history');
 
 async function trafficSnapshot() {
   try {
-    const host = (process.env.MIKROTIK_HOST || '').split(':')[0];
-    const port = parseInt(process.env.MIKROTIK_API_PORT || '56988');
-    const user = process.env.MIKROTIK_USER || '';
-    const pass = process.env.MIKROTIK_PASS || '';
+    const mainHost = (process.env.MIKROTIK_HOST || '').split(':')[0];
+    const mainPort = parseInt(process.env.MIKROTIK_API_PORT || '56988');
+    const mainUser = process.env.MIKROTIK_USER || '';
+    const mainPass = process.env.MIKROTIK_PASS || '';
 
+    let rx = 0, tx = 0;
+
+    // 1. Fetch Main Router global traffic
     const [resRows, ifaces] = await Promise.all([
-      runCommand(host, port, user, pass, '/system/resource/print'),
-      runCommand(host, port, user, pass, '/interface/print'),
+      runCommand(mainHost, mainPort, mainUser, mainPass, '/system/resource/print').catch(() => []),
+      runCommand(mainHost, mainPort, mainUser, mainPass, '/interface/print').catch(() => []),
     ]);
 
-    const running = ifaces
-      .filter(i => i.running === 'true' && !(i.type || '').toLowerCase().startsWith('pppoe'))
-      .map(i => i.name)
-      .slice(0, 100);
+    if (Array.isArray(ifaces) && ifaces.length > 0) {
+      const running = ifaces
+        .filter(i => i.running === 'true' && !(i.type || '').toLowerCase().startsWith('pppoe'))
+        .map(i => i.name)
+        .slice(0, 100);
 
-    let rx = 0, tx = 0, sfpRx = 0, sfpTx = 0, lacpRx = 0, lacpTx = 0, arahRx = 0, arahTx = 0;
-
-    if (running.length) {
-      const pMain = runCommand(host, port, user, pass, '/interface/monitor-traffic', [
-        `=interface=${running.join(',')}`,
-        '=once=',
-      ]).catch(e => ({ error: e }));
-
-      // The user requested LACP polling to .42 x86
-      const brsHost = process.env.BRS_HOST || '157.66.36.42';
-      const brsApiPort = parseInt(process.env.BRS_API_PORT || '8233');
-      const brsUser = process.env.BRS_USER || process.env.MIKROTIK_USER || 'admin';
-      const brsPass = process.env.BRS_PASS || process.env.MIKROTIK_PASS || 'PNS321';
-
-      const pBrs = runCommand(brsHost, brsApiPort, brsUser, brsPass, '/interface/print').then(swIfaces => {
-        if (!Array.isArray(swIfaces)) return [];
-        const running = swIfaces.filter(i => i.running === 'true').map(i => i.name).slice(0, 50);
-        if (!running.length) return [];
-        return runCommand(brsHost, brsApiPort, brsUser, brsPass, '/interface/monitor-traffic', [
+      if (running.length) {
+        const mainRes = await runCommand(mainHost, mainPort, mainUser, mainPass, '/interface/monitor-traffic', [
           `=interface=${running.join(',')}`,
           '=once=',
         ]).catch(e => ({ error: e }));
-      }).catch(e => ({ error: e }));
 
-      const swHost = process.env.SW_HOST || '192.20.40.2';
-      const swApiPort = parseInt(process.env.SW_API_PORT || '8728');
-      const swUser = process.env.SW_USER || process.env.MIKROTIK_USER || 'admin';
-      const swPass = process.env.SW_PASS || process.env.MIKROTIK_PASS || '';
-
-      const pSw = runCommand(swHost, swApiPort, swUser, swPass, '/interface/print')
-        .catch(e => ({ error: e })).then(async (swIfaces) => {
-          if (swIfaces && swIfaces.error) return swIfaces;
-          if (!Array.isArray(swIfaces)) return [];
-
-          const swIfaceName = process.env.SW_INTERFACE || '';
-          const target = swIfaces.find(i => {
-            const n = (i.name || '').toUpperCase();
-            const c = (i.comment || '').toUpperCase();
-            return (swIfaceName && n === swIfaceName.toUpperCase()) ||
-              n.includes('ARAH-BAROS') || c.includes('ARAH-BAROS') || c.includes('ARAH BAROS');
+        if (Array.isArray(mainRes) && !mainRes.error) {
+          mainRes.forEach(e => {
+            rx += parseInt(e['rx-bits-per-second'] || 0);
+            tx += parseInt(e['tx-bits-per-second'] || 0);
           });
-          if (!target) return [];
-
-          return runCommand(swHost, swApiPort, swUser, swPass, '/interface/monitor-traffic', [
-            `=interface=${target.name}`,
-            '=once=',
-          ]).catch(e => ({ error: e }));
-        });
-
-      const [mainRes, brsRes, swRes] = await Promise.all([pMain, pBrs, pSw]);
-
-      if (Array.isArray(mainRes) && !mainRes.error) {
-        mainRes.forEach(e => {
-          const nr = parseInt(e['rx-bits-per-second'] || 0);
-          const nt = parseInt(e['tx-bits-per-second'] || 0);
-          rx += nr;
-          tx += nt;
-          const n = e.name || '';
-          if (n === 'A-sfp-sfplus-1') {
-            sfpRx = nr; sfpTx = nt;
-          }
-        });
-      } else {
-        console.error('[Traffic] Main Router Error:', mainRes.reason);
-      }
-
-      if (Array.isArray(swRes) && !swRes.error) {
-        swRes.forEach(e => {
-          arahRx += parseInt(e['rx-bits-per-second'] || 0);
-          arahTx += parseInt(e['tx-bits-per-second'] || 0);
-        });
-      } else if (swRes && swRes.error) {
-        console.error('[Traffic] CRS-326 Switch Error:', swRes.error.message || swRes.error);
-      }
-
-      if (Array.isArray(brsRes) && !brsRes.error) {
-        brsRes.forEach(e => {
-          lacpRx += parseInt(e['rx-bits-per-second'] || 0);
-          lacpTx += parseInt(e['tx-bits-per-second'] || 0);
-        });
-      } else if (brsRes.error) {
-        console.error('[Traffic] BRS Router Error:', brsRes.error.message || brsRes.error);
+        }
       }
     }
 
-    recordTraffic(rx, tx, sfpRx, sfpTx, lacpRx, lacpTx, arahRx, arahTx);
-    if (resRows[0]) recordUptime(resRows[0].uptime || '');
-  } catch (_) { }
+    // 2. Fetch Dynamic Custom Graphs
+    // Looking for process.env.CUSTOM_GRAPH_<ID>_DEV / _IFACE
+    const customGraphs = [];
+    const customPromises = [];
+
+    // Group graphs by target device to optimize requests (one req per router)
+    const devicePolls = {}; // { devKey: { host, port, user, pass, interfaces: Set, graphIds: Set } }
+
+    const extractDevCreds = (devKey) => {
+      if (devKey === 'MAIN' || devKey === 'MIKROTIK') return { h: mainHost, p: mainPort, u: mainUser, pw: mainPass };
+      // Try resolving directly MK_DEVICE_<devKey>_... or fallback to devKey_HOST
+      const h = process.env[`MK_DEVICE_${devKey}_HOST`] || process.env[`${devKey}_HOST`];
+      const p = parseInt(process.env[`MK_DEVICE_${devKey}_API_PORT`] || process.env[`${devKey}_API_PORT`] || '8728');
+      const u = process.env[`MK_DEVICE_${devKey}_USER`] || process.env[`${devKey}_USER`] || mainUser;
+      const pw = process.env[`MK_DEVICE_${devKey}_PASS`] || process.env[`${devKey}_PASS`] || mainPass;
+      return h ? { h, p, u, pw } : null;
+    };
+
+    for (const key of Object.keys(process.env)) {
+      const match = key.match(/^CUSTOM_GRAPH_([A-Z0-9_]+)_DEV$/);
+      if (match) {
+        const id = match[1];
+        const devKey = (process.env[key] || '').toUpperCase();
+        const ifaceTarget = process.env[`CUSTOM_GRAPH_${id}_IFACE`] || '';
+
+        if (!devKey || !ifaceTarget) continue;
+
+        const creds = extractDevCreds(devKey);
+        if (!creds) continue;
+
+        if (!devicePolls[devKey]) {
+          devicePolls[devKey] = { ...creds, requests: [] };
+        }
+        
+        devicePolls[devKey].requests.push({ id, ifaceTarget });
+        // placeholder
+        customGraphs.push({ id, rx: 0, tx: 0 });
+      }
+    }
+
+    // Execute the polls
+    for (const devKey of Object.keys(devicePolls)) {
+      const tg = devicePolls[devKey];
+      const ifaceSet = Array.from(new Set(tg.requests.map(r => r.ifaceTarget)));
+      
+      const p = runCommand(tg.h, tg.p, tg.u, tg.pw, '/interface/monitor-traffic', [
+        `=interface=${ifaceSet.join(',')}`,
+        '=once='
+      ]).catch(() => []).then(res => {
+        if (!Array.isArray(res)) return;
+        res.forEach(item => {
+          const itemRx = parseInt(item['rx-bits-per-second'] || 0);
+          const itemTx = parseInt(item['tx-bits-per-second'] || 0);
+          const itemName = item.name || '';
+          
+          // Map speeds back to customGraphs based on interface name matching
+          tg.requests.forEach(req => {
+            if (req.ifaceTarget === itemName) {
+              const cg = customGraphs.find(x => x.id === req.id);
+              if (cg) {
+                cg.rx = itemRx;
+                cg.tx = itemTx;
+              }
+            }
+          });
+        });
+      });
+      customPromises.push(p);
+    }
+
+    if (customPromises.length > 0) {
+      await Promise.all(customPromises);
+    }
+
+    recordTraffic(rx, tx, customGraphs);
+    if (resRows && resRows[0]) recordUptime(resRows[0].uptime || '');
+  } catch (_) {}
 }
 
 function startTrafficRecorder() {

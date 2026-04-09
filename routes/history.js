@@ -40,13 +40,11 @@ function uptimeToSeconds(upStr) {
 }
 
 // ─── Record traffic point ─────────────────────────────────────────────────────
-function recordTraffic(totalRx, totalTx, sfpRx, sfpTx, lacpRx, lacpTx, arahRx, arahTx) {
+function recordTraffic(totalRx, totalTx, customGraphs) {
   pushCapped(trafficHistory, {
     ts: Date.now(),
     total: { rx: totalRx, tx: totalTx },
-    sfp:   { rx: sfpRx, tx: sfpTx },
-    lacp:  { rx: lacpRx, tx: lacpTx },
-    arah:  { rx: arahRx || 0, tx: arahTx || 0 }
+    custom: customGraphs || [] // Array of { id, rx, tx }
   }, MAX_TRAFFIC_POINTS);
 }
 

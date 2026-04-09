@@ -194,13 +194,43 @@ router.get('/interface/stats/:key?', async (req, res) => {
   }
 });
 
-/* ─── GET /api/mikrotik/devices (New Route for Dropdown) ───────────────────── */
+/* ─── GET /api/mikrotik/devices ────────────────────────────────────────────── */
 router.get('/devices', (req, res) => {
-  const devices = loadMikrotikDevices();
-  const list = Object.values(devices)
-    .filter(d => d.host && d.port)
-    .map(d => ({ key: d.key, label: d.label, host: d.host }));
-  res.json(list);
+  const devices = [{ key: 'MAIN', label: '.31 Utama (CCR)', host: (process.env.MIKROTIK_HOST||'').split(':')[0] }];
+  const leg = ['BRS', 'R50', 'R155'];
+  leg.forEach(k => {
+    if (process.env[`${k}_HOST`]) {
+      devices.push({ key: k, label: process.env[`MK_DEVICE_${k}_LABEL`] || k, host: process.env[`${k}_HOST`].split(':')[0] });
+    }
+  });
+  for (const key of Object.keys(process.env)) {
+    const match = key.match(/^MK_DEVICE_([A-Z0-9_]+)_HOST$/);
+    if (match) {
+      devices.push({ key: match[1], label: process.env[`MK_DEVICE_${match[1]}_LABEL`] || match[1], host: process.env[key].split(':')[0] });
+    }
+  }
+  return res.json(devices);
+});
+
+/* ─── GET /api/mikrotik/public-config ──────────────────────────────────────── */
+router.get('/public-config', (req, res) => {
+  const customGraphs = [];
+  for (const key of Object.keys(process.env)) {
+    const match = key.match(/^CUSTOM_GRAPH_([A-Z0-9_]+)_DEV$/);
+    if (match) {
+      const id = match[1];
+      customGraphs.push({
+        id,
+        dev: process.env[key],
+        iface: process.env[`CUSTOM_GRAPH_${id}_IFACE`] || '',
+        title: process.env[`CUSTOM_GRAPH_${id}_TITLE`] || `Graph ${id}`
+      });
+    }
+  }
+  res.json({
+    interval: parseInt(process.env.POLL_INTERVAL || '3000'),
+    graphs: customGraphs
+  });
 });
 
 /* ─── POST /api/mikrotik/traffic ────────────────────────────────────────────── */

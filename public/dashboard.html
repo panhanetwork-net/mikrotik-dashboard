@@ -261,53 +261,12 @@
         </div>
       </div>
 
-      <!-- 4-Graph Dashboard (PRTG Replacement) -->
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(48%,1fr));gap:16px;margin-bottom:16px;">
-
-        <!-- SFP+ 1 Traffic -->
-        <div class="dash-card fade-up" style="padding:1rem;">
-          <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
-            <p
-              style="font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">
-              A-sfp-sfplus-1 Traffic</p>
-            <div style="display:flex;gap:12px;font-size:0.7rem;color:#fff;font-weight:600;">
-              <div><span style="color:#38bdf8">●</span> IN <span id="val-sfp-rx">0.0</span> Mb/s</div>
-              <div><span style="color:#f472b6">●</span> OUT <span id="val-sfp-tx">0.0</span> Mb/s</div>
-            </div>
-          </div>
-          <div style="height:140px;position:relative;"><canvas id="chart-sfp"></canvas></div>
-        </div>
-
-        <!-- LACP Traffic -->
-        <div class="dash-card fade-up" style="padding:1rem;">
-          <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
-            <p
-              style="font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">
-              LACP X86 Traffic</p>
-            <div style="display:flex;gap:12px;font-size:0.7rem;color:#fff;font-weight:600;">
-              <div><span style="color:#fbbf24">●</span> IN <span id="val-lacp-rx">0.0</span> Mb/s</div>
-              <div><span style="color:#fb7185">●</span> OUT <span id="val-lacp-tx">0.0</span> Mb/s</div>
-            </div>
-          </div>
-          <div style="height:140px;position:relative;">
-            <canvas id="chart-lacp"></canvas>
-          </div>
-        </div>
-
-        <!-- ARAH-BAROS Traffic -->
-        <div class="dash-card fade-up" style="padding:1rem;">
-          <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
-            <p
-              style="font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">
-              ARAH-BAROS Traffic</p>
-            <div style="display:flex;gap:12px;font-size:0.7rem;color:#fff;font-weight:600;">
-              <div><span style="color:#4ade80">●</span> IN <span id="val-arah-rx">0.0</span> Mb/s</div>
-              <div><span style="color:#c084fc">●</span> OUT <span id="val-arah-tx">0.0</span> Mb/s</div>
-            </div>
-          </div>
-          <div style="height:140px;position:relative;"><canvas id="chart-arah"></canvas></div>
-        </div>
-
+      <!-- Custom Configurable Graphs -->
+      <div id="dynamic-graphs-container" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(48%,1fr));gap:16px;margin-bottom:16px;">
+        <!-- Javascript automatically injects Custom Graphs here -->
+      </div>
+      
+      <div style="display:grid;grid-template-columns:1fr;gap:16px;margin-bottom:16px;">
         <!-- Technitium DNS -->
         <div class="dash-card fade-up" style="padding:1rem;">
           <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
@@ -925,24 +884,8 @@
             <div style="height:150px;position:relative;"><canvas id="chart-hist-global"></canvas></div>
           </div>
 
-          <div class="dash-card">
-            <p style="font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:12px;">
-              A-sfp-sfplus-1 Traffic</p>
-            <div style="height:150px;position:relative;"><canvas id="chart-hist-sfp"></canvas></div>
-          </div>
-
-          <div class="dash-card">
-            <p style="font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:12px;">
-              LACP X86 Traffic</p>
-            <div style="height:150px;position:relative;">
-              <canvas id="chart-hist-lacp"></canvas>
-            </div>
-          </div>
-
-          <div class="dash-card">
-            <p style="font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:12px;">
-              ARAH-BAROS Traffic</p>
-            <div style="height:150px;position:relative;"><canvas id="chart-hist-arah"></canvas></div>
+          <div id="hist-dynamic-graphs-container" style="display:contents;">
+            <!-- JS dynamically injects history graphs here based on Custom Graphs configs -->
           </div>
 
         </div>
@@ -1138,6 +1081,7 @@
         <div style="display:flex;gap:12px;margin-bottom:16px;border-bottom:1px solid var(--border-color);padding-bottom:12px;overflow-x:auto;">
           <button class="settings-tab-btn active" id="st-mikrotik" onclick="switchSettingsTab('mikrotik')" style="background:none;border:none;color:var(--accent);font-size:.8rem;font-weight:600;cursor:pointer;white-space:nowrap;">MikroTik Devices</button>
           <button class="settings-tab-btn" id="st-snmp" onclick="switchSettingsTab('snmp')" style="background:none;border:none;color:var(--muted);font-size:.8rem;font-weight:600;cursor:pointer;white-space:nowrap;">SNMP Targets</button>
+          <button class="settings-tab-btn" id="st-graphs" onclick="switchSettingsTab('graphs')" style="background:none;border:none;color:var(--muted);font-size:.8rem;font-weight:600;cursor:pointer;white-space:nowrap;">Custom Graphs</button>
           <button class="settings-tab-btn" id="st-telegram" onclick="switchSettingsTab('telegram')" style="background:none;border:none;color:var(--muted);font-size:.8rem;font-weight:600;cursor:pointer;white-space:nowrap;">Telegram Alert</button>
           <button class="settings-tab-btn" id="st-system" onclick="switchSettingsTab('system')" style="background:none;border:none;color:var(--muted);font-size:.8rem;font-weight:600;cursor:pointer;white-space:nowrap;">System</button>
         </div>
@@ -1160,6 +1104,15 @@
               <!-- JS Injected -->
             </div>
             <button type="button" onclick="addSnmpNode()" style="margin-top:16px;width:100%;padding:10px;background:rgba(59,130,246,.1);border:1px dashed #3b82f6;color:#60a5fa;border-radius:8px;font-size:.75rem;cursor:pointer;">+ Tambah SNMP Target</button>
+          </div>
+
+          <!-- Tab Content: Custom Graphs -->
+          <div id="settings-graphs" class="settings-pane" style="display:none;">
+            <p style="font-size:.7rem;color:var(--muted);margin-bottom:16px;">Render otomatis grafik traffic sesukanya! Pilih router target, interface target, dan beri nama grafik.</p>
+            <div id="dyn-graphs-list" style="display:flex;flex-direction:column;gap:16px;">
+              <!-- JS Injected -->
+            </div>
+            <button type="button" onclick="addCustomGraphNode()" style="margin-top:16px;width:100%;padding:10px;background:rgba(59,130,246,.1);border:1px dashed #3b82f6;color:#60a5fa;border-radius:8px;font-size:.75rem;cursor:pointer;">+ Tambah Custom Graph</button>
           </div>
 
           <!-- Tab Content: Telegram -->

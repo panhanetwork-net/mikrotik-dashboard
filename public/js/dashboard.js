@@ -13,20 +13,20 @@ let pollTimer    = null;
 let pollInterval = 3000;
 let rxPeak = 0, txPeak = 0;
 let prevRxBytes = {}, prevTxBytes = {}, prevTimestamp = null;
-let chartRx, chartTx, chartSfp, chartLacp, chartArah, chartDns;
+let chartRx, chartTx, chartDns;
 const MAX_POINTS = 60;
 const rxData = new Array(MAX_POINTS).fill(0);
 const txData = new Array(MAX_POINTS).fill(0);
-const historySfpRx    = new Array(MAX_POINTS).fill(0), historySfpTx    = new Array(MAX_POINTS).fill(0);
-const historyLacpRx   = new Array(MAX_POINTS).fill(0), historyLacpTx   = new Array(MAX_POINTS).fill(0);
-const historyArahRx   = new Array(MAX_POINTS).fill(0), historyArahTx   = new Array(MAX_POINTS).fill(0);
 const historyDnsTotal = new Array(MAX_POINTS).fill(0), historyDnsBlock = new Array(MAX_POINTS).fill(0);
 const LABELS = Array.from({ length: MAX_POINTS }, () => '');
+
+let customCharts = {}; // { id: { rxData, txData, chart } }
+let publicConfig = { interval: 3000, graphs: [] };
 let isOnline = true;
 let activeTab = 'dashboard';
 let allPppoe  = [];
 let allConns  = [];
-let chartHistGlobal, chartHistSfp, chartHistLacp, chartHistArah;
+let chartHistGlobal;
 const ifaceCharts = {}; // name -> { rxData, txData, chart }
 const MAX_IFACE_POINTS = 30;
 // SNMP state (declared here so switchTab can reference them safely)
@@ -45,12 +45,91 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   initCharts();
   gsap.to('.fade-up', { opacity: 1, y: 0, duration: .5, ease: 'power3.out', stagger: .06, delay: .1 });
+  await fetchPublicConfig();
   await fetchMikrotikDevices();
   startPolling();
   startStatusMonitor();
   fetchPingStatus();
   setInterval(fetchPingStatus, 10000);
 });
+
+async function fetchPublicConfig() {
+  try {
+    const res = await fetch('/api/mikrotik/public-config').then(r => r.json());
+    publicConfig = res;
+    pollInterval = res.interval || 3000;
+    
+    // Apply Settings
+    const ci = document.getElementById('interval-select');
+    if (ci) {
+      if (pollInterval === 3000) ci.value = '3';
+      else if (pollInterval === 5000) ci.value = '5';
+      else if (pollInterval === 10000) ci.value = '10';
+      else {
+        // Custom!
+        const op = document.createElement('option');
+        op.value = Math.round(pollInterval / 1000);
+        op.textContent = `Update: ${op.value}s`;
+        ci.appendChild(op);
+        ci.value = op.value;
+      }
+    }
+
+    // Build Custom Graph Canvas Elements
+    const ct = document.getElementById('dynamic-graphs-container');
+    if (ct) {
+      ct.innerHTML = '';
+      res.graphs.forEach(g => {
+        const safeId = 'cg-' + g.id;
+        ct.innerHTML += `
+        <div class="dash-card fade-up" style="padding:1rem;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
+            <p style="font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">
+              ${g.title}</p>
+            <div style="display:flex;gap:12px;font-size:0.7rem;color:#fff;font-weight:600;">
+              <div><span style="color:#fbbf24">●</span> IN <span id="val-${safeId}-rx">0.0</span> Mb/s</div>
+              <div><span style="color:#fb7185">●</span> OUT <span id="val-${safeId}-tx">0.0</span> Mb/s</div>
+            </div>
+          </div>
+          <div style="height:140px;position:relative;">
+            <canvas id="chart-${safeId}"></canvas>
+          </div>
+        </div>
+        `;
+      });
+      
+      // Initialize Charts
+      res.graphs.forEach((g, idx) => {
+        const safeId = 'cg-' + g.id;
+        const rx = new Array(MAX_POINTS).fill(0);
+        const tx = new Array(MAX_POINTS).fill(0);
+        const colors = [
+          ['rgb(251, 191, 36)', 'rgb(251, 113, 133)'], // Orange/Pink
+          ['rgb(56, 189, 248)', 'rgb(244, 114, 182)'], // Blue/Pink
+          ['rgb(74, 222, 128)', 'rgb(192, 132, 252)'], // Green/Purple
+          ['rgb(96, 165, 250)', 'rgb(45, 212, 191)']  // Blue/Teal
+        ];
+        const clr = colors[idx % colors.length];
+        
+        const initDual = (id, c1, c2, d1, d2) => new Chart(document.getElementById(id), {
+          ...getDualChartConfig(),
+          data: {
+            labels: LABELS,
+            datasets: [
+              { data: d1.slice(), borderColor: c1, backgroundColor: c1.replace('rgb', 'rgba').replace(')', ',0.05)'), fill: true },
+              { data: d2.slice(), borderColor: c2, backgroundColor: c2.replace('rgb', 'rgba').replace(')', ',0.05)'), fill: true },
+            ],
+          },
+        });
+
+        const c = initDual('chart-' + safeId, clr[0], clr[1], rx, tx);
+        customCharts[g.id] = { rxData: rx, txData: tx, chart: c };
+      });
+    }
+  } catch (e) {
+    console.error('Failed to load public config:', e);
+  }
+}
 
 /* ─── Tab Switching ──────────────────────────────────────────────────────── */
 function switchTab(tab) {
@@ -299,7 +378,7 @@ function updateTrafficUI(data) {
   while(currentLabels.length < MAX_POINTS) { currentLabels.unshift(''); }
 
   const applyLabels = (c) => { c.data.labels = currentLabels.slice(); };
-  [chartRx, chartTx, chartSfp, chartLacp, chartArah, chartDns].forEach(c => {
+  [chartRx, chartTx, chartDns, ...Object.values(customCharts).map(v => v.chart)].forEach(c => {
     if(c && c.data) applyLabels(c);
   });
 
@@ -307,14 +386,39 @@ function updateTrafficUI(data) {
   setChartDataSingle(chartRx, rxData, data, 'total', 'rx');
   setChartDataSingle(chartTx, txData, data, 'total', 'tx');
 
-  // Update dual PRTG charts
-  setChartData(chartSfp, historySfpRx, historySfpTx, data, 'sfp');
-  setChartData(chartLacp, historyLacpRx, historyLacpTx, data, 'lacp');
-  setChartData(chartArah, historyArahRx, historyArahTx, data, 'arah');
-
-  updateTrafficLabels(data, 'sfp', 'val-sfp-rx', 'val-sfp-tx');
-  updateTrafficLabels(data, 'lacp', 'val-lacp-rx', 'val-lacp-tx');
-  updateTrafficLabels(data, 'arah', 'val-arah-rx', 'val-arah-tx');
+  // Update dual custom charts
+  publicConfig.graphs.forEach(g => {
+    const mem = customCharts[g.id];
+    if (mem && mem.chart) {
+      const graphDataRx = data.map(p => { const o = p.custom?.find(x => x.id === g.id); return o ? o.rx : 0 });
+      const graphDataTx = data.map(p => { const o = p.custom?.find(x => x.id === g.id); return o ? o.tx : 0 });
+      
+      const slicedRx = graphDataRx.slice(-MAX_POINTS);
+      const slicedTx = graphDataTx.slice(-MAX_POINTS);
+      
+      while (slicedRx.length < MAX_POINTS) slicedRx.unshift(0);
+      while (slicedTx.length < MAX_POINTS) slicedTx.unshift(0);
+      
+      mem.rxData.splice(0, MAX_POINTS, ...slicedRx);
+      mem.txData.splice(0, MAX_POINTS, ...slicedTx);
+      
+      mem.chart.data.datasets[0].data = mem.rxData.slice();
+      mem.chart.data.datasets[1].data = mem.txData.slice();
+      mem.chart.options.scales.y.max = Math.max(...mem.rxData, ...mem.txData) * 1.2 || 1;
+      mem.chart.update('none');
+      
+      // Update texts
+      const safeId = 'cg-' + g.id;
+      const rxEl = document.getElementById(`val-${safeId}-rx`);
+      const txEl = document.getElementById(`val-${safeId}-tx`);
+      if (rxEl && txEl) {
+        const lastRx = fmtRate(slicedRx[slicedRx.length-1]);
+        const lastTx = fmtRate(slicedTx[slicedTx.length-1]);
+        rxEl.innerHTML = `${lastRx.val} <span style="font-size:0.6rem;">${lastRx.unit}</span>`;
+        txEl.innerHTML = `${lastTx.val} <span style="font-size:0.6rem;">${lastTx.unit}</span>`;
+      }
+    }
+  });
   
   // Update Peak labels for Top Cards
   const latest = data[data.length - 1];
@@ -785,35 +889,67 @@ async function testTelegram() {
 }
 
 /* ─── History Chart ─────────────────────────────────────────────────────────── */
-function histChartConfig(colorIn, colorOut) {
-  return {
+function initHistoryChart() {
+  if (chartHistGlobal) return;
+  const histChartConfig = (c1, c2) => ({
     type: 'line',
-    data: { labels: [], datasets: [
-      { data: [], borderColor: colorIn, backgroundColor: colorIn.replace('rgb', 'rgba').replace(')', ',0.1)'), borderWidth: 1, pointRadius: 0, fill: true, tension: 0.1 },
-      { data: [], borderColor: colorOut, backgroundColor: 'transparent', borderWidth: 1, pointRadius: 0, fill: false, tension: 0.1 }
-    ]},
+    data: {
+      labels: [],
+      datasets: [
+        { data: [], borderColor: c1, backgroundColor: c1.replace('rgb', 'rgba').replace(')', ',0.1)'), fill: true, tension: 0.3, borderWidth: 1.5, pointRadius: 0, hitRadius: 10 },
+        { data: [], borderColor: c2, backgroundColor: c2.replace('rgb', 'rgba').replace(')', ',0.1)'), fill: true, tension: 0.3, borderWidth: 1.5, pointRadius: 0, hitRadius: 10 }
+      ]
+    },
     options: {
-      responsive: true, maintainAspectRatio: false, animation: false,
+      responsive: true, maintainAspectRatio: false, animation: { duration: 0 },
       plugins: { legend: { display: false }, tooltip: {
         mode: 'index', intersect: false, backgroundColor: '#1e2534', titleColor: '#8b9ab0', bodyColor: '#e2e8f0', borderColor: '#2d3748', borderWidth: 1,
         callbacks: { label: ctx => { const f = fmtRate(ctx.raw); return ` ${f.val} ${f.unit}`; } }
       }},
       scales: {
-        x: { display: true, grid: { display: false }, ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 9 }, maxRotation: 45, maxTicksLimit: 12 } },
-        y: { display: true, min: 0, grid: { color: 'rgba(255,255,255,0.04)' }, border: { display: false }, ticks: {
-          color: '#8b9ab0', font: { size: 10 }, maxTicksLimit: 4, callback: v => { const f = fmtRate(v); return f.val + ' ' + f.unit; } } },
-      },
-      interaction: { mode: 'nearest', axis: 'x', intersect: false },
+        x: { ticks: { color: 'var(--muted)', font: { size: 10 }, maxTicksLimit: 8 }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        y: { ticks: { color: 'var(--muted)', font: { size: 10 }, maxTicksLimit: 6, callback: v => { const f = fmtRate(v); return f.val + ' ' + f.unit; } }, grid: { color: 'rgba(255,255,255,0.05)' }, min: 0 }
+      }
     }
-  };
-}
+  });
 
-function initHistoryChart() {
-  if (chartHistGlobal) return;
-  chartHistGlobal = new Chart(document.getElementById('chart-hist-global').getContext('2d'), histChartConfig('rgb(74, 222, 128)', 'rgb(192, 132, 252)'));
-  chartHistSfp    = new Chart(document.getElementById('chart-hist-sfp').getContext('2d'), histChartConfig('rgb(56, 189, 248)', 'rgb(244, 114, 182)'));
-  chartHistLacp   = new Chart(document.getElementById('chart-hist-lacp').getContext('2d'), histChartConfig('rgb(251, 191, 36)', 'rgb(251, 113, 133)'));
-  chartHistArah   = new Chart(document.getElementById('chart-hist-arah').getContext('2d'), histChartConfig('rgb(74, 222, 128)', 'rgb(192, 132, 252)'));
+  chartHistGlobal = new Chart(document.getElementById('chart-hist-global').getContext('2d'), histChartConfig('rgb(59, 130, 246)', 'rgb(168, 85, 247)'));
+
+  // Initialize Dynamic History Charts
+  const hCt = document.getElementById('hist-dynamic-graphs-container');
+  if (hCt && publicConfig) {
+    publicConfig.graphs.forEach((g, idx) => {
+      const safeId = 'cg-' + g.id;
+      const colors = [
+          ['rgb(251, 191, 36)', 'rgb(251, 113, 133)'], 
+          ['rgb(56, 189, 248)', 'rgb(244, 114, 182)'], 
+          ['rgb(74, 222, 128)', 'rgb(192, 132, 252)'], 
+          ['rgb(96, 165, 250)', 'rgb(45, 212, 191)']
+      ];
+      const clr = colors[idx % colors.length];
+      
+      const canvasId = 'chart-hist-' + safeId;
+      hCt.innerHTML += `
+        <div class="dash-card">
+          <p style="font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:12px;">
+            ${g.title}</p>
+          <div style="height:150px;position:relative;"><canvas id="${canvasId}"></canvas></div>
+        </div>
+      `;
+      // Can't instantiate immediately because DOM insertion via innerHTML wipes previous DOM references.
+      // So we wait until loop finishes.
+    });
+    
+    // Post-insertion instantiation
+    publicConfig.graphs.forEach((g, idx) => {
+      const safeId = 'cg-' + g.id;
+      const colors = [['rgb(251, 191, 36)', 'rgb(251, 113, 133)'],['rgb(56, 189, 248)', 'rgb(244, 114, 182)'],['rgb(74, 222, 128)', 'rgb(192, 132, 252)'],['rgb(96, 165, 250)', 'rgb(45, 212, 191)']];
+      const clr = colors[idx % colors.length];
+      const c = new Chart(document.getElementById('chart-hist-' + safeId).getContext('2d'), histChartConfig(clr[0], clr[1]));
+      
+      if (customCharts[g.id]) customCharts[g.id].histChart = c;
+    });
+  }
 }
 
 /* ─── Fetch: Queues (Bandwidth per IP) ──────────────────────────────────────── */
@@ -1338,6 +1474,7 @@ async function loadSnmpInterfaces() {
 
 let dynamicMkCount = 0;
 let dynamicSnmpCount = 0;
+let dynamicGraphCount = 0;
 
 function switchSettingsTab(tab) {
   document.querySelectorAll('.settings-tab-btn').forEach(b => b.classList.remove('active'));
@@ -1418,6 +1555,34 @@ function buildSnmpBlock(key, label, host, comm) {
   `;
 }
 
+function buildCustomGraphBlock(id, dev, iface, title) {
+  return `
+    <div class="graph-node-block" style="padding:12px;background:var(--bg-color);border:1px solid var(--border-color);border-radius:8px;position:relative;">
+      <button type="button" onclick="this.parentElement.remove()" style="position:absolute;top:8px;right:8px;background:none;border:none;color:#ef4444;cursor:pointer;font-size:1rem;line-height:1;">&times;</button>
+      <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;margin-bottom:12px;">
+        <div>
+          <label style="display:block;font-size:.7rem;color:#94a3b8;margin-bottom:4px;">No Graph (Numeric)</label>
+          <input type="number" name="dyn_graph_id_${dynamicGraphCount}" class="login-input" value="${id}" style="padding:8px;font-size:.8rem;width:80px;" required>
+        </div>
+        <div>
+          <label style="display:block;font-size:.7rem;color:#94a3b8;margin-bottom:4px;">Device Key (e.g. MAIN)</label>
+          <input type="text" name="dyn_graph_dev_${dynamicGraphCount}" class="login-input" value="${dev}" style="padding:8px;font-size:.8rem;" required>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <label style="display:block;font-size:.7rem;color:#94a3b8;margin-bottom:4px;">Target Interface Name</label>
+          <input type="text" name="dyn_graph_iface_${dynamicGraphCount}" class="login-input" value="${iface}" style="padding:8px;font-size:.8rem;" required>
+        </div>
+        <div>
+          <label style="display:block;font-size:.7rem;color:#94a3b8;margin-bottom:4px;">Graph Title</label>
+          <input type="text" name="dyn_graph_title_${dynamicGraphCount}" class="login-input" value="${title}" style="padding:8px;font-size:.8rem;" required>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function addMikrotikNode() {
   dynamicMkCount++;
   document.getElementById('dyn-mikrotik-list').insertAdjacentHTML('beforeend', buildMkBlock('', '', '', '8728', '', ''));
@@ -1426,6 +1591,11 @@ function addMikrotikNode() {
 function addSnmpNode() {
   dynamicSnmpCount++;
   document.getElementById('dyn-snmp-list').insertAdjacentHTML('beforeend', buildSnmpBlock('', '', '', 'public'));
+}
+
+function addCustomGraphNode() {
+  dynamicGraphCount++;
+  document.getElementById('dyn-graphs-list').insertAdjacentHTML('beforeend', buildCustomGraphBlock(dynamicGraphCount, 'MAIN', '', ''));
 }
 
 async function loadSettings() {
@@ -1470,15 +1640,15 @@ async function loadSettings() {
       }
     }
 
-    // Build SNMP List
-    const snmpContainer = document.getElementById('dyn-snmp-list');
-    snmpContainer.innerHTML = '';
+    // Build Custom Graphs List
+    const graphsContainer = document.getElementById('dyn-graphs-list');
+    graphsContainer.innerHTML = '';
     for (const k of Object.keys(data)) {
-      const match = k.match(/^SNMP_DEVICE_([A-Z0-9_]+)_HOST$/);
+      const match = k.match(/^CUSTOM_GRAPH_([A-Z0-9_]+)_DEV$/);
       if (match) {
-        dynamicSnmpCount++;
-        const pKey = match[1];
-        snmpContainer.innerHTML += buildSnmpBlock(pKey, data[`SNMP_DEVICE_${pKey}_LABEL`], data[k], data[`SNMP_DEVICE_${pKey}_COMMUNITY`]);
+        dynamicGraphCount++;
+        const id = match[1];
+        graphsContainer.innerHTML += buildCustomGraphBlock(id, data[k], data[`CUSTOM_GRAPH_${id}_IFACE`], data[`CUSTOM_GRAPH_${id}_TITLE`]);
       }
     }
   } catch (err) {
@@ -1497,16 +1667,16 @@ async function saveSettings(e) {
   const payload = {};
   
   // Array management: Instruct backend to wipe all dynamic keys before assigning from form
-  payload._DELETE_PREFIXES = ['MK_DEVICE_', 'SNMP_DEVICE_', 'BRS_HOST', 'R50_HOST', 'R155_HOST', 'BRS_API_PORT', 'R50_API_PORT', 'R155_API_PORT', 'BRS_USER', 'R50_USER', 'R155_USER'];
+  payload._DELETE_PREFIXES = ['MK_DEVICE_', 'SNMP_DEVICE_', 'CUSTOM_GRAPH_', 'BRS_HOST', 'R50_HOST', 'R155_HOST', 'BRS_API_PORT', 'R50_API_PORT', 'R155_API_PORT', 'BRS_USER', 'R50_USER', 'R155_USER'];
 
   const mkPairs = {};
   const snmpPairs = {};
+  const graphPairs = {};
 
   fd.forEach((value, key) => {
     const val = value.trim();
     if (val === '') return;
 
-    // Intercept dynamically generated names and turn them into standardized prefixes
     if (key.startsWith('dyn_mk_key_')) {
       const idx = key.replace('dyn_mk_key_', '');
       mkPairs[idx] = mkPairs[idx] || {};
@@ -1516,7 +1686,6 @@ async function saveSettings(e) {
       mkPairs[idx] = mkPairs[idx] || {};
       mkPairs[idx].label = val;
     } else if (key.startsWith('dyn_snmp_')) {
-      // dyn_snmp_key_1, dyn_snmp_lbl_1, dyn_snmp_host_1, dyn_snmp_comm_1
       const parts = key.split('_');
       const prop = parts[2];
       const idx = parts[3];
@@ -1525,18 +1694,23 @@ async function saveSettings(e) {
       if (prop === 'lbl') snmpPairs[idx].label = val;
       if (prop === 'host') snmpPairs[idx].host = val;
       if (prop === 'comm') snmpPairs[idx].comm = val;
+    } else if (key.startsWith('dyn_graph_')) {
+      const parts = key.split('_');
+      const prop = parts[2];
+      const idx = parts[3];
+      graphPairs[idx] = graphPairs[idx] || {};
+      if (prop === 'id') graphPairs[idx].id = val.replace(/[^A-Z0-9_]/gi, '').toUpperCase();
+      if (prop === 'dev') graphPairs[idx].dev = val.toUpperCase();
+      if (prop === 'iface') graphPairs[idx].iface = val;
+      if (prop === 'title') graphPairs[idx].title = val;
     } else {
-      payload[key] = val; // MIKROTIK_HOST, MK_DEVICE_XYZ_... inputs mapped natively
+      payload[key] = val; 
     }
   });
 
-  // Re-inject mapped pairs into payload
   for (const idx of Object.keys(mkPairs)) {
     const m = mkPairs[idx];
-    if (m.key) {
-      payload[`MK_DEVICE_${m.key}_LABEL`] = m.label || m.key;
-      // Note: The rest of MK_DEVICE_<KEY>_HOST is already in payload because the inputs are dynamically named
-    }
+    if (m.key) payload[`MK_DEVICE_${m.key}_LABEL`] = m.label || m.key;
   }
 
   for (const idx of Object.keys(snmpPairs)) {
@@ -1545,6 +1719,15 @@ async function saveSettings(e) {
       payload[`SNMP_DEVICE_${p.key}_HOST`] = p.host;
       payload[`SNMP_DEVICE_${p.key}_COMMUNITY`] = p.comm || 'public';
       payload[`SNMP_DEVICE_${p.key}_LABEL`] = p.label || p.key;
+    }
+  }
+
+  for (const idx of Object.keys(graphPairs)) {
+    const g = graphPairs[idx];
+    if (g.id && g.dev && g.iface) {
+      payload[`CUSTOM_GRAPH_${g.id}_DEV`] = g.dev;
+      payload[`CUSTOM_GRAPH_${g.id}_IFACE`] = g.iface;
+      payload[`CUSTOM_GRAPH_${g.id}_TITLE`] = g.title || g.iface;
     }
   }
 

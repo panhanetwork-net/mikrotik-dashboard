@@ -43,6 +43,90 @@
       "router_ip": "157.66.36.31:65533",
       "message": "🔴 <b>MikroTik Router OFFLINE / DOWN</b>\n\n📡 <b>Router IP:</b> <code>157.66.36.31:65533</code>\n🕐 <b>Waktu:</b> 9/4/2026, 00.42.16\n🔧 <b>Sistem:</b> 2Arah Tech — MikroTik Dashboard\n\n⚠️ Router tidak dapat dijangkau. Tim NOC harap segera cek koneksi.",
       "sent_at": "2026-04-08T17:42:16.877Z"
+    },
+    {
+      "id": 1775678576620,
+      "type": "DOWN",
+      "router_ip": "157.66.36.31:65533",
+      "message": "🔴 <b>MikroTik Router OFFLINE / DOWN</b>\n\n📡 <b>Router IP:</b> <code>157.66.36.31:65533</code>\n🕐 <b>Waktu:</b> 9/4/2026, 03.02.54\n🔧 <b>Sistem:</b> 2Arah Tech — MikroTik Dashboard\n\n⚠️ Router tidak dapat dijangkau. Tim NOC harap segera cek koneksi.",
+      "sent_at": "2026-04-08T20:02:56.620Z"
+    },
+    {
+      "id": 1775678590562,
+      "type": "UP",
+      "router_ip": "157.66.36.31:65533",
+      "message": "🟢 <b>MikroTik Router ONLINE / UP</b>\n\n📡 <b>Router IP:</b> <code>157.66.36.31:65533</code>\n🕐 <b>Waktu:</b> 9/4/2026, 03.03.09\n🔧 <b>Sistem:</b> 2Arah Tech — MikroTik Dashboard\n\n✅ Router kembali online dan dapat dijangkau.",
+      "sent_at": "2026-04-08T20:03:10.562Z"
+    },
+    {
+      "id": 1775678665225,
+      "type": "DOWN",
+      "router_ip": "157.66.36.31:65533",
+      "message": "🔴 <b>MikroTik Router OFFLINE / DOWN</b>\n\n📡 <b>Router IP:</b> <code>157.66.36.31:65533</code>\n🕐 <b>Waktu:</b> 9/4/2026, 03.04.24\n🔧 <b>Sistem:</b> 2Arah Tech — MikroTik Dashboard\n\n⚠️ Router tidak dapat dijangkau. Tim NOC harap segera cek koneksi.",
+      "sent_at": "2026-04-08T20:04:25.225Z"
+    },
+    {
+      "id": 1775678683341,
+      "type": "UP",
+      "router_ip": "157.66.36.31:65533",
+      "message": "🟢 <b>MikroTik Router ONLINE / UP</b>\n\n📡 <b>Router IP:</b> <code>157.66.36.31:65533</code>\n🕐 <b>Waktu:</b> 9/4/2026, 03.04.41\n🔧 <b>Sistem:</b> 2Arah Tech — MikroTik Dashboard\n\n✅ Router kembali online dan dapat dijangkau.",
+      "sent_at": "2026-04-08T20:04:43.341Z"
+    },
+    {
+      "id": 1775679449611,
+      "type": "DOWN",
+      "router_ip": "157.66.36.31:65533",
+      "message": "🔴 <b>MikroTik Router OFFLINE / DOWN</b>\n\n📡 <b>Router IP:</b> <code>157.66.36.31:65533</code>\n🕐 <b>Waktu:</b> 9/4/2026, 03.17.27\n🔧 <b>Sistem:</b> 2Arah Tech — MikroTik Dashboard\n\n⚠️ Router tidak dapat dijangkau. Tim NOC harap segera cek koneksi.",
+      "sent_at": "2026-04-08T20:17:29.611Z"
+    },
+    {
+      "id": 1775679465107,
+      "type": "UP",
+      "router_ip": "157.66.36.31:65533",
+      "message": "🟢 <b>MikroTik Router ONLINE / UP</b>\n\n📡 <b>Router IP:</b> <code>157.66.36.31:65533</code>\n🕐 <b>Waktu:</b> 9/4/2026, 03.17.43\n🔧 <b>Sistem:</b> 2Arah Tech — MikroTik Dashboard\n\n✅ Router kembali online dan dapat dijangkau.",
+      "sent_at": "2026-04-08T20:17:45.107Z"
+    },
+    {
+      "id": 1775680198244,
+      "type": "DOWN",
+      "router_ip": "157.66.36.31:65533",
+      "message": "🔴 <b>MikroTik Router OFFLINE / DOWN</b>\n\n📡 <b>Router IP:</b> <code>157.66.36.31:65533</code>\n🕐 <b>Waktu:</b> 9/4/2026, 03.29.57\n🔧 <b>Sistem:</b> 2Arah Tech — MikroTik Dashboard\n\n⚠️ Router tidak dapat dijangkau. Tim NOC harap segera cek koneksi.",
+      "sent_at": "2026-04-08T20:29:58.244Z"
+    },
+    {
+      "id": 1775680245978,
+      "type": "UP",
+      "router_ip": "157.66.36.31:65533",
+      "message": "🟢 <b>MikroTik Router ONLINE / UP</b>\n\n📡 <b>Router IP:</b> <code>157.66.36.31:65533</code>\n🕐 <b>Waktu:</b> 9/4/2026, 03.30.44\n🔧 <b>Sistem:</b> 2Arah Tech — MikroTik Dashboard\n\n✅ Router kembali online dan dapat dijangkau.",
+      "sent_at": "2026-04-08T20:30:45.978Z"
+    },
+    {
+      "id": 1775716766375,
+      "type": "DOWN",
+      "router_ip": "157.66.36.31:65533",
+      "message": "🔴 <b>MikroTik Router OFFLINE / DOWN</b>\n\n<b>Router IP:</b> <code>157.66.36.31:65533</code>\n<b>Waktu:</b> 9/4/2026, 13.39.02\n<b>Sistem:</b> 2Arah Tech — MikroTik Dashboard\n\nRouter tidak dapat dijangkau. Tim NOC harap segera cek koneksi.",
+      "sent_at": "2026-04-09T06:39:26.375Z"
+    },
+    {
+      "id": 1775716769370,
+      "type": "UP",
+      "router_ip": "157.66.36.31:65533",
+      "message": "🟢 <b>MikroTik Router ONLINE / UP</b>\n\n<b>Router IP:</b> <code>157.66.36.31:65533</code>\n<b>Waktu:</b> 9/4/2026, 13.39.28\n<b>Sistem:</b> 2Arah Tech — MikroTik Dashboard\n\nRouter kembali online dan dapat dijangkau.",
+      "sent_at": "2026-04-09T06:39:29.370Z"
+    },
+    {
+      "id": 1775716773150,
+      "type": "DOWN",
+      "router_ip": "157.66.36.31:65533",
+      "message": "🔴 <b>MikroTik Router OFFLINE / DOWN</b>\n\n<b>Router IP:</b> <code>157.66.36.31:65533</code>\n<b>Waktu:</b> 9/4/2026, 13.39.32\n<b>Sistem:</b> 2Arah Tech — MikroTik Dashboard\n\nRouter tidak dapat dijangkau. Tim NOC harap segera cek koneksi.",
+      "sent_at": "2026-04-09T06:39:33.150Z"
+    },
+    {
+      "id": 1775716790013,
+      "type": "UP",
+      "router_ip": "157.66.36.31:65533",
+      "message": "🟢 <b>MikroTik Router ONLINE / UP</b>\n\n<b>Router IP:</b> <code>157.66.36.31:65533</code>\n<b>Waktu:</b> 9/4/2026, 13.39.49\n<b>Sistem:</b> 2Arah Tech — MikroTik Dashboard\n\nRouter kembali online dan dapat dijangkau.",
+      "sent_at": "2026-04-09T06:39:50.013Z"
     }
   ]
 }
