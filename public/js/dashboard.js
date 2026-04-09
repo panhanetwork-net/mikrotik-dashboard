@@ -1533,11 +1533,19 @@ let dynamicSnmpCount = 0;
 let dynamicGraphCount = 0;
 
 function switchSettingsTab(tab) {
-  document.querySelectorAll('.settings-tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.settings-tab-btn').forEach(b => {
+    b.classList.remove('active');
+    b.style.color = 'var(--muted)';
+  });
   document.querySelectorAll('.settings-pane').forEach(p => p.style.display = 'none');
   
-  document.getElementById(`st-${tab}`).classList.add('active');
-  document.getElementById(`settings-${tab}`).style.display = 'block';
+  const activeBtn = document.getElementById(`st-${tab}`);
+  if (activeBtn) {
+    activeBtn.classList.add('active');
+    activeBtn.style.color = 'var(--accent)';
+  }
+  const pane = document.getElementById(`settings-${tab}`);
+  if (pane) pane.style.display = 'block';
 }
 
 function buildMkBlock(key, label, host, apiPort, webPort, userStr, disabled) {
@@ -1687,12 +1695,22 @@ async function loadSettings() {
       }
     });
 
+    const snmpContainer = document.getElementById('dyn-snmp-list');
+    snmpContainer.innerHTML = '';
+
     for (const k of Object.keys(data)) {
-      const match = k.match(/^MK_DEVICE_([A-Z0-9_]+)_HOST$/);
-      if (match) {
+      const matchMk = k.match(/^MK_DEVICE_([A-Z0-9_]+)_HOST$/);
+      if (matchMk) {
         dynamicMkCount++;
-        const pKey = match[1];
+        const pKey = matchMk[1];
         mkContainer.innerHTML += buildMkBlock(pKey, data[`MK_DEVICE_${pKey}_LABEL`], data[k], data[`MK_DEVICE_${pKey}_API_PORT`], data[`MK_DEVICE_${pKey}_WEB_PORT`], data[`MK_DEVICE_${pKey}_USER`]);
+      }
+      
+      const matchSnmp = k.match(/^SNMP_DEVICE_([A-Z0-9_]+)_HOST$/);
+      if (matchSnmp) {
+        dynamicSnmpCount++;
+        const sKey = matchSnmp[1];
+        snmpContainer.innerHTML += buildSnmpBlock(sKey, data[`SNMP_DEVICE_${sKey}_LABEL`], data[k], data[`SNMP_DEVICE_${sKey}_COMM`]);
       }
     }
 
