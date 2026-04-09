@@ -61,6 +61,27 @@ app.use('/api/ping', requireAuth, pingRouter);
 app.use('/api/snmp', requireAuth, snmpRouter);
 app.use('/api/settings', requireAuth, settingsRouter);
 
+// ─── Public Config (no auth required — needed before login for chart init) ───
+app.use('/api/mikrotik/public-config', (req, res) => {
+  const customGraphs = [];
+  for (const key of Object.keys(process.env)) {
+    const match = key.match(/^CUSTOM_GRAPH_([A-Z0-9_]+)_DEV$/);
+    if (match) {
+      const id = match[1];
+      customGraphs.push({
+        id,
+        dev:   process.env[key],
+        iface: process.env[`CUSTOM_GRAPH_${id}_IFACE`] || '',
+        title: process.env[`CUSTOM_GRAPH_${id}_TITLE`] || `Graph ${id}`,
+      });
+    }
+  }
+  res.json({
+    interval: parseInt(process.env.POLL_INTERVAL || '3000'),
+    graphs: customGraphs,
+  });
+});
+
 // ─── Technitium DNS Proxy ───────────────────────────────────────────────────
 app.get('/api/technitium/chart', requireAuth, async (req, res) => {
   try {
