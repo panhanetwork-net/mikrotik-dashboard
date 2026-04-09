@@ -35,11 +35,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(session({
-  store: new MemoryStore({ checkPeriod: 8 * 60 * 60 * 1000 }),
+  store: new MemoryStore({ checkPeriod: 30 * 24 * 60 * 60 * 1000 }), // 30 hari
   secret: process.env.SESSION_SECRET || 'fallback-secret-change-me',
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 8 * 60 * 60 * 1000, httpOnly: true, sameSite: 'lax' },
+  cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true, sameSite: 'lax' },
 }));
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -56,6 +56,28 @@ app.use('/api/mikrotik', requireAuth, mikrotikRouter);
 app.use('/api/alerts', requireAuth, alertsRouter);
 app.use('/api/history', requireAuth, historyRouter);
 app.use('/api/ping', requireAuth, pingRouter);
+
+// ─── Technitium DNS Proxy ───────────────────────────────────────────────────
+app.get('/api/technitium/chart', requireAuth, async (req, res) => {
+  try {
+    const dURL = process.env.TECHNITIUM_URL;
+    const token = process.env.TECHNITIUM_TOKEN;
+    if (!dURL || !token) return res.status(500).json({ error: 'Technitium ENV not set' });
+    
+    const u = `${dURL}/api/dashboard/stats/get?token=${token}&type=lastHour`;
+    const resp = await fetch(u);
+    
+    if (!resp.ok) {
+      const errText = await resp.text();
+      throw new Error(`API Error ${resp.status}: ${errText}`);
+    }
+    const j = await resp.json();
+    return res.json(j);
+  } catch (err) {
+    console.error('[Technitium] Proxy Error:', err.message);
+    return res.status(502).json({ error: err.message });
+  }
+});
 
 // ─── Pages ───────────────────────────────────────────────────────────────────
 app.get('/', (req, res) => {
@@ -90,4 +112,109 @@ app.listen(PORT, () => {
 
   startHealthMonitor(mikrotikFetch, checkThresholds);
   startPingMonitor();
+  startTrafficRecorder();
 });
+
+// ─── Traffic Recorder (fills /api/history/traffic ring buffer) ────────────────
+const { runCommand }              = require('./routes/routeros-api');
+const { recordTraffic, recordUptime } = require('./routes/history');
+
+async function trafficSnapshot() {
+  try {
+    const host = (process.env.MIKROTIK_HOST || '').split(':')[0];
+    const port = parseInt(process.env.MIKROTIK_API_PORT || '56988');
+    const user = process.env.MIKROTIK_USER || '';
+    const pass = process.env.MIKROTIK_PASS || '';
+
+    const [resRows, ifaces] = await Promise.all([
+      runCommand(host, port, user, pass, '/system/resource/print'),
+      runCommand(host, port, user, pass, '/interface/print'),
+    ]);
+
+    const running = ifaces
+      .filter(i => i.running === 'true' && !(i.type||'').toLowerCase().startsWith('pppoe'))
+      .map(i => i.name)
+      .slice(0, 100);
+
+    let rx = 0, tx = 0, sfpRx = 0, sfpTx = 0, lacpRx = 0, lacpTx = 0, arahRx = 0, arahTx = 0;
+    
+    if (running.length) {
+      const pMain = runCommand(host, port, user, pass, '/interface/monitor-traffic', [
+        `=interface=${running.join(',')}`,
+        '=once=',
+      ]).catch(e => ({ error: e }));
+
+      // NOTE: User requested to temporarily disable LACP polling to .50 due to firewall/hotspot blocks
+      const pBrs = Promise.resolve({ disabled: true });
+
+      const swHost = process.env.SW_HOST || '192.20.40.2';
+      const swApiPort = parseInt(process.env.SW_API_PORT || '8728');
+      const swUser = process.env.SW_USER || process.env.MIKROTIK_USER || 'admin';
+      const swPass = process.env.SW_PASS || process.env.MIKROTIK_PASS || '';
+      
+      const pSw = runCommand(swHost, swApiPort, swUser, swPass, '/interface/print')
+        .catch(e => ({ error: e })).then(async (swIfaces) => {
+          if (swIfaces && swIfaces.error) return swIfaces;
+          if (!Array.isArray(swIfaces)) return [];
+          
+          const swIfaceName = process.env.SW_INTERFACE || '';
+          const target = swIfaces.find(i => {
+             const n = (i.name || '').toUpperCase();
+             const c = (i.comment || '').toUpperCase();
+             return (swIfaceName && n === swIfaceName.toUpperCase()) || 
+                    n.includes('ARAH-BAROS') || c.includes('ARAH-BAROS') || c.includes('ARAH BAROS');
+          });
+          if (!target) return [];
+          
+          return runCommand(swHost, swApiPort, swUser, swPass, '/interface/monitor-traffic', [
+            `=interface=${target.name}`,
+            '=once=',
+          ]).catch(e => ({ error: e }));
+        });
+
+      const [mainRes, brsRes, swRes] = await Promise.all([pMain, pBrs, pSw]);
+
+      if (Array.isArray(mainRes) && !mainRes.error) {
+        mainRes.forEach(e => {
+          const nr = parseInt(e['rx-bits-per-second'] || 0);
+          const nt = parseInt(e['tx-bits-per-second'] || 0);
+          rx += nr;
+          tx += nt;
+          const n = e.name || '';
+          if (n === 'A-sfp-sfplus-1') {
+            sfpRx = nr; sfpTx = nt;
+          }
+        });
+      } else {
+        console.error('[Traffic] Main Router Error:', mainRes.reason);
+      }
+
+      if (Array.isArray(swRes) && !swRes.error) {
+        swRes.forEach(e => {
+          arahRx += parseInt(e['rx-bits-per-second'] || 0);
+          arahTx += parseInt(e['tx-bits-per-second'] || 0);
+        });
+      } else if (swRes && swRes.error) {
+        console.error('[Traffic] CRS-326 Switch Error:', swRes.error.message || swRes.error);
+      }
+
+      if (Array.isArray(brsRes) && !brsRes.error) {
+        brsRes.forEach(e => {
+          lacpRx += parseInt(e['rx-bits-per-second'] || 0);
+          lacpTx += parseInt(e['tx-bits-per-second'] || 0);
+        });
+      } else if (brsRes.error) {
+        console.error('[Traffic] BRS Router Error:', brsRes.error.message || brsRes.error);
+      }
+    }
+
+    recordTraffic(rx, tx, sfpRx, sfpTx, lacpRx, lacpTx, arahRx, arahTx);
+    if (resRows[0]) recordUptime(resRows[0].uptime || '');
+  } catch (_) {}
+}
+
+function startTrafficRecorder() {
+  console.log('  [History] Traffic recorder dimulai — interval 30s');
+  trafficSnapshot();                        // first snapshot immediately
+  setInterval(trafficSnapshot, 30 * 1000); // every 30s
+}

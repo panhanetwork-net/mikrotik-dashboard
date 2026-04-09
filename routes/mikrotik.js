@@ -12,9 +12,9 @@ function apiHost() {
 function user() { return process.env.MIKROTIK_USER || ''; }
 function pass() { return process.env.MIKROTIK_PASS || ''; }
 
-async function api(cmd, extra = []) {
+async function api(cmd, extra = [], maxRows = Infinity) {
   const { host, port } = apiHost();
-  return runCommand(host, port, user(), pass(), cmd, extra);
+  return runCommand(host, port, user(), pass(), cmd, extra, maxRows);
 }
 
 // Interface types considered "core" (exclude pppoe-out tunnels per-session)
@@ -42,8 +42,42 @@ router.get('/status', async (req, res) => {
 /* ─── GET /api/mikrotik/resources ──────────────────────────────────────────── */
 router.get('/resources', async (req, res) => {
   try {
-    const rows = await api('/system/resource/print');
-    return res.json(rows[0] || {});
+    const pMain = api('/system/resource/print').catch(() => []);
+    
+    const brsHost = process.env.BRS_HOST || '157.66.36.50';
+    const brsApiPort = parseInt(process.env.BRS_API_PORT || '8750');
+    const brsWwwPort = parseInt(process.env.BRS_WWW_PORT || '8965');
+    const brsUser = process.env.BRS_USER || process.env.MIKROTIK_USER || 'admin';
+    const brsPass = process.env.BRS_PASS || process.env.MIKROTIK_PASS || '';
+
+    const pBrs = runCommand(brsHost, brsApiPort, brsUser, brsPass, '/system/resource/print')
+      .catch(e => ({ error: e })).then(async (resObj) => {
+        if (resObj && resObj.error) {
+           try {
+             const auth = Buffer.from(brsUser + ':' + brsPass).toString('base64');
+             const r = await fetch(`http://${brsHost}:${brsWwwPort}/rest/system/resource`, {
+               headers: { 'Authorization': 'Basic ' + auth }
+             });
+             const text = await r.text();
+             try {
+               const j = JSON.parse(text);
+               return Array.isArray(j) ? j : [j];
+             } catch (e) {
+               return [];
+             }
+           } catch (e) {
+             return [];
+           }
+        }
+        return resObj;
+      });
+
+    const [mainRows, brsRows] = await Promise.all([pMain, pBrs]);
+    
+    return res.json({
+      main: (Array.isArray(mainRows) ? mainRows[0] : null) || {},
+      brs:  (Array.isArray(brsRows) ? brsRows[0] : null) || {}
+    });
   } catch (err) {
     return res.status(502).json({ error: err.message });
   }
@@ -64,8 +98,8 @@ router.get('/interfaces', async (req, res) => {
   try {
     const all    = await api('/interface/print');
     const ifaces = all.filter(isCore); // hide pppoe-out session tunnels
-    const stats  = await api('/interface/print', ['=stats=']).catch(() => []);
-    return res.json({ ifaces, stats });
+    // rx-byte/tx-byte are already included in /interface/print output on ROS 7.x
+    return res.json({ ifaces, stats: ifaces });
   } catch (err) {
     return res.status(502).json({ error: err.message });
   }
@@ -91,8 +125,8 @@ router.post('/traffic', async (req, res) => {
 /* ─── GET /api/mikrotik/pppoe-active ────────────────────────────────────────── */
 router.get('/pppoe-active', async (req, res) => {
   try {
-    const data = await api('/ppp/active/print');
-    return res.json(data);
+    const sessions = await api('/ppp/active/print');
+    return res.json({ total: sessions.length, sessions });
   } catch (err) {
     return res.status(502).json({ error: err.message });
   }
@@ -101,10 +135,17 @@ router.get('/pppoe-active', async (req, res) => {
 /* ─── GET /api/mikrotik/connections ────────────────────────────────────────── */
 router.get('/connections', async (req, res) => {
   try {
-    const data = await api('/ip/firewall/connection/print', [
+    // 1. Get true total connections instantly via tracking
+    const track = await api('/ip/firewall/connection/tracking/print');
+    const total = parseInt((track[0] || {})['total-entries'] || '0');
+
+    // 2. Fetch a capped subset of connections so we don't timeout the socket 
+    // maxRows = 3000 effectively aborts the socket once 3000 rows are processed
+    const connections = await api('/ip/firewall/connection/print', [
       '=.proplist=src-address,dst-address,protocol,tcp-state,orig-bytes,repl-bytes',
-    ]);
-    return res.json(data.slice(0, 1000));
+    ], 3000);
+
+    return res.json({ total, connections });
   } catch (err) {
     return res.status(502).json({ error: err.message });
   }
@@ -123,12 +164,11 @@ router.get('/queues', async (req, res) => {
 /* ─── GET /api/mikrotik/firewall-stats ─────────────────────────────────────── */
 router.get('/firewall-stats', async (req, res) => {
   try {
-    const proplist = ['=.proplist=.id,chain,action,protocol,src-address,dst-address,comment,bytes,packets,disabled'];
-    const [filter, nat, mangle] = await Promise.all([
-      api('/ip/firewall/filter/print', proplist).catch(() => []),
-      api('/ip/firewall/nat/print', proplist).catch(() => []),
-      api('/ip/firewall/mangle/print', proplist).catch(() => []),
-    ]);
+    // Sequential calls: avoid parallel connection overload on RouterOS API
+    // No proplist — bytes/packets require stats flag not supported in binary API
+    const filter = await api('/ip/firewall/filter/print').catch(() => []);
+    const nat    = await api('/ip/firewall/nat/print').catch(() => []);
+    const mangle = await api('/ip/firewall/mangle/print').catch(() => []);
     return res.json({ filter, nat, mangle });
   } catch (err) {
     return res.status(502).json({ error: err.message });

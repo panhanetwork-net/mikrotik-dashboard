@@ -11,7 +11,7 @@ const MAX_TRAFFIC_POINTS = 1440; // 24h at 1 poll/minute
 const MAX_EVENTS         = 200;
 
 // ─── Ring buffers ─────────────────────────────────────────────────────────────
-const trafficHistory  = [];   // { ts, rxBps, txBps }
+const trafficHistory  = [];   // { ts, total: {rx,tx}, sfp: {rx,tx}, lacp: {rx,tx}, arah: {rx,tx} }
 const uptimeEvents    = [];   // { ts, event:'start'|'reboot', uptimeStr }
 const thresholdAlerts = [];   // { ts, type, value, threshold, routerIp }
 
@@ -40,8 +40,14 @@ function uptimeToSeconds(upStr) {
 }
 
 // ─── Record traffic point ─────────────────────────────────────────────────────
-function recordTraffic(rxBps, txBps) {
-  pushCapped(trafficHistory, { ts: Date.now(), rxBps, txBps }, MAX_TRAFFIC_POINTS);
+function recordTraffic(totalRx, totalTx, sfpRx, sfpTx, lacpRx, lacpTx, arahRx, arahTx) {
+  pushCapped(trafficHistory, {
+    ts: Date.now(),
+    total: { rx: totalRx, tx: totalTx },
+    sfp:   { rx: sfpRx, tx: sfpTx },
+    lacp:  { rx: lacpRx, tx: lacpTx },
+    arah:  { rx: arahRx || 0, tx: arahTx || 0 }
+  }, MAX_TRAFFIC_POINTS);
 }
 
 // ─── Record uptime + detect reboots ──────────────────────────────────────────

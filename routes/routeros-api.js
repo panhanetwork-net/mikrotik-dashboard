@@ -82,8 +82,9 @@ function md5Response(pass, challenge) {
  * @param {string}   pass
  * @param {string}   cmd      e.g. '/interface/print'
  * @param {string[]} [extra]  extra words e.g. ['=stats=']
+ * @param {number}   [maxRows]  abort early after fetching N rows
  */
-function runCommand(host, port, user, pass, cmd, extra = []) {
+function runCommand(host, port, user, pass, cmd, extra = [], maxRows = Infinity) {
   return new Promise((resolve, reject) => {
     const sock   = new net.Socket();
     let   buf    = Buffer.alloc(0);
@@ -91,7 +92,7 @@ function runCommand(host, port, user, pass, cmd, extra = []) {
     let   phase  = 'login';   // 'login' | 'cmd' | 'done'
     let   settled = false;
 
-    const timeout = setTimeout(() => settle(new Error('RouterOS API timeout')), 9000);
+    const timeout = setTimeout(() => settle(new Error('RouterOS API timeout')), 45000);
 
     function settle(err, val) {
       if (settled) return;
@@ -134,6 +135,9 @@ function runCommand(host, port, user, pass, cmd, extra = []) {
               row[w.slice(1, idx)] = w.slice(idx + 1);
             }
             rows.push(row);
+            if (rows.length >= maxRows) {
+              settle(null, rows);
+            }
           } else if (type === '!done') {
             settle(null, rows);
           } else if (type === '!trap') {
