@@ -257,6 +257,7 @@ html, body {
   .login-card { margin: 1rem; }
   .dash-table { font-size: .75rem; }
   .dash-table th, .dash-table td { padding: 8px 10px; }
+  .grid-2-col { grid-template-columns: 1fr !important; }
 }
 
 canvas { display: block; }
