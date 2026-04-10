@@ -3,7 +3,16 @@
 const fs = require('fs'), path = require('path');
 try {
   const envPath = path.join(__dirname, '.env');
-  const lines = fs.readFileSync(envPath, 'utf8').split('\n');
+  let envRaw = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf8') : '';
+
+  // Bootstrap default Legacy Custom Graphs if none exist out of the box
+  if (!envRaw.includes('CUSTOM_GRAPH_')) {
+    const defaults = `\n# Default Legacy Graphs\nCUSTOM_GRAPH_1_DEV=MAIN\nCUSTOM_GRAPH_1_IFACE=A-sfp-sfplus-1\nCUSTOM_GRAPH_1_TITLE=A-sfp-sfplus-1 Traffic\nCUSTOM_GRAPH_2_DEV=BRS\nCUSTOM_GRAPH_2_IFACE=ether1\nCUSTOM_GRAPH_2_TITLE=LACP X86 Traffic\nCUSTOM_GRAPH_3_DEV=MAIN\nCUSTOM_GRAPH_3_IFACE=ether1\nCUSTOM_GRAPH_3_TITLE=ARAH-BAROS Traffic\n`;
+    fs.appendFileSync(envPath, defaults);
+    envRaw += defaults;
+  }
+
+  const lines = envRaw.split('\n');
   for (const line of lines) {
     const t = line.trim();
     if (!t || t.startsWith('#')) continue;

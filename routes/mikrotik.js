@@ -86,7 +86,7 @@ router.get('/resources', async (req, res) => {
   try {
     const devices = getDevicesList();
     const fetchRes = async (d) => {
-      if (d.key === 'MAIN') return api('/system/resource/print').catch(() => []);
+      if (d.key === 'MAIN') return api('/system/resource/print').catch(e => [{ _error: "Gagal terhubung ke Router MAIN" }]);
       
       return runCommand(d.host, d.port, d.user, d.pass, '/system/resource/print')
         .catch(e => ({ error: e })).then(async (resObj) => {
@@ -100,8 +100,8 @@ router.get('/resources', async (req, res) => {
                try {
                  const j = JSON.parse(text);
                  return Array.isArray(j) ? j : [j];
-               } catch (e) { return []; }
-             } catch (e) { return []; }
+               } catch (e) { return [{ _error: "Koneksi berhasil tetapi format data salah." }]; }
+             } catch (e) { return [{ _error: "Gagal terhubung ke API (Port mati/salah pass)." }]; }
           }
           return resObj;
         });
@@ -233,8 +233,9 @@ router.get('/public-config', (req, res) => {
     }
   }
   res.json({
-    interval: parseInt(process.env.POLL_INTERVAL || '3000'),
-    graphs: customGraphs
+    interval: parseInt(process.env.POLL_INTERVAL || '2000'),
+    graphs: customGraphs,
+    technitiumTitle: process.env.TECHNITIUM_TITLE || 'Technitium DNS'
   });
 });
 

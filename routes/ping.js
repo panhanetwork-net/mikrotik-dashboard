@@ -1,17 +1,36 @@
 'use strict';
 const express       = require('express');
 const { runCommand} = require('./routeros-api');
+const fs            = require('fs');
+const path          = require('path');
 const router        = express.Router();
 
 // ─── Config ─────────────────────────────────────────────────────────────────
-const PING_TARGET       = process.env.PING_TARGET || '8.8.8.8';
 const PING_INTERVAL     = 15000;          // 15s
 const ALERT_COOLDOWN    = 5 * 60 * 1000; // 5 min between repeat alerts while RTO
 const ALERT_REPEAT_EVERY = 5;            // send alert every N consecutive RTOs
 
+// Reads PING_TARGET dynamically from .env each cycle so settings updates apply without restart
+function getPingTarget() {
+  try {
+    const envPath = path.join(__dirname, '../.env');
+    const lines = fs.readFileSync(envPath, 'utf8').split('\n');
+    for (const line of lines) {
+      const t = line.trim();
+      if (!t || t.startsWith('#')) continue;
+      const idx = t.indexOf('=');
+      if (idx < 0) continue;
+      if (t.slice(0, idx).trim() === 'PING_TARGET') {
+        return t.slice(idx + 1).trim().replace(/^["']|["']$/g, '');
+      }
+    }
+  } catch (_) {}
+  return process.env.PING_TARGET || '8.8.8.8';
+}
+
 // ─── State ──────────────────────────────────────────────────────────────────
 let pingStatus = {
-  target:          PING_TARGET,
+  target:          null,
   online:          null,
   consecutiveRTO:  0,
   totalRTO:        0,
@@ -50,6 +69,8 @@ async function sendTelegram(msg) {
 // Runs /ping on the router itself so it can reach internal IPs (e.g. 192.168.22.3)
 async function runPing() {
   const now = Date.now();
+  const PING_TARGET = getPingTarget();
+  pingStatus.target = PING_TARGET; // sync for status endpoint
   try {
     const { host, port, user, pass } = apiConn();
     if (!host) return; // not configured yet
@@ -135,7 +156,7 @@ async function runPing() {
 
 // ─── Start monitor ────────────────────────────────────────────────────────────
 function startPingMonitor() {
-  console.log(`  [Ping] Monitoring ${PING_TARGET} via RouterOS API setiap ${PING_INTERVAL / 1000}s`);
+  console.log(`  [Ping] Monitoring ${getPingTarget()} via RouterOS API setiap ${PING_INTERVAL / 1000}s (target dinamis dari .env)`);
   runPing();
   setInterval(runPing, PING_INTERVAL);
 }

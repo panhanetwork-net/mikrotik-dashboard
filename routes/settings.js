@@ -31,7 +31,7 @@ router.get('/', (req, res) => {
   const envVars = parseEnv();
   // Mask sensitive data for frontend rendering
   const safeEnv = { ...envVars };
-  const maskFields = ['DASHBOARD_PASS', 'MK_PASS', 'TELEGRAM_BOT_TOKEN'];
+  const maskFields = ['DASHBOARD_PASS', 'MK_PASS', 'TELEGRAM_BOT_TOKEN', 'TECHNITIUM_TOKEN'];
   maskFields.forEach(field => {
     if (safeEnv[field]) {
       safeEnv[field] = '********'; // Masked placeholder
@@ -53,7 +53,8 @@ router.post('/', (req, res) => {
   // Identify if critical variables changed that actually require a PM2 backend restart to re-bind
   if (
     (payload.PORT && payload.PORT !== currentEnv.PORT) ||
-    (payload.TELEGRAM_BOT_TOKEN && payload.TELEGRAM_BOT_TOKEN !== '********' && payload.TELEGRAM_BOT_TOKEN !== currentEnv.TELEGRAM_BOT_TOKEN)
+    (payload.TELEGRAM_BOT_TOKEN && payload.TELEGRAM_BOT_TOKEN !== '********' && payload.TELEGRAM_BOT_TOKEN !== currentEnv.TELEGRAM_BOT_TOKEN) ||
+    (payload.PING_TARGET && payload.PING_TARGET !== currentEnv.PING_TARGET)
   ) {
     requiresRestart = true;
   }

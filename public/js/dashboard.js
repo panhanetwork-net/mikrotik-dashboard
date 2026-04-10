@@ -75,27 +75,32 @@ async function fetchPublicConfig() {
       }
     }
 
-    // Build Custom Graph Canvas Elements
+    // Set Technitium Title dynamically
+    const dnsTitleEl = document.getElementById('dns-title');
+    if (dnsTitleEl && res.technitiumTitle) {
+      dnsTitleEl.innerHTML = `${res.technitiumTitle} <span id="val-dns-time" style="font-weight:normal;opacity:0.6;"></span>`;
+    }
+
     const ct = document.getElementById('dynamic-graphs-container');
     if (ct) {
-      ct.innerHTML = '';
+      ct.querySelectorAll('.custom-graph').forEach(e => e.remove());
       res.graphs.forEach(g => {
         const safeId = 'cg-' + g.id;
-        ct.innerHTML += `
-        <div class="dash-card fade-up" style="padding:1rem;">
+        ct.insertAdjacentHTML('beforeend', `
+        <div class="dash-card fade-up custom-graph" style="padding:1rem;">
           <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
             <p style="font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">
               ${g.title}</p>
             <div style="display:flex;gap:12px;font-size:0.7rem;color:#fff;font-weight:600;">
-              <div><span style="color:#fbbf24">●</span> IN <span id="val-${safeId}-rx">0.0</span> Mb/s</div>
-              <div><span style="color:#fb7185">●</span> OUT <span id="val-${safeId}-tx">0.0</span> Mb/s</div>
+              <div><span style="color:#fbbf24">●</span> IN <span id="val-${safeId}-rx">0.0</span></div>
+              <div><span style="color:#fb7185">●</span> OUT <span id="val-${safeId}-tx">0.0</span></div>
             </div>
           </div>
           <div style="height:140px;position:relative;">
             <canvas id="chart-${safeId}"></canvas>
           </div>
         </div>
-        `;
+        `);
       });
       
       // Initialize Charts
@@ -125,6 +130,8 @@ async function fetchPublicConfig() {
         const c = initDual('chart-' + safeId, clr[0], clr[1], rx, tx);
         customCharts[g.id] = { rxData: rx, txData: tx, chart: c };
       });
+      
+      if (window.gsap) gsap.to(ct.querySelectorAll('.custom-graph'), { opacity: 1, y: 0, duration: .5, ease: 'power3.out', stagger: .06 });
     }
   } catch (e) {
     console.error('Failed to load public config:', e);
@@ -192,7 +199,7 @@ const getSingleChartConfig = (isTraffic = true) => ({
     plugins: {
       legend: { display: false },
       tooltip: {
-        mode: 'index', intersect: false, backgroundColor: '#1e2534', titleColor: '#8b9ab0', bodyColor: '#e2e8f0', borderColor: '#2d3748', borderWidth: 1,
+        mode: 'index', intersect: false, backgroundColor: '#1e2534', titleColor: '#8b9ab0', bodyColor: '#e2e8f0', borderColor: '#2d3748', borderWidth: 3,
         callbacks: { label: ctx => { return isTraffic ? fmtRate(ctx.raw).val + ' ' + fmtRate(ctx.raw).unit : ctx.raw + ' Q' } },
       },
     },
@@ -203,7 +210,7 @@ const getSingleChartConfig = (isTraffic = true) => ({
     },
     elements: {
       point: { radius: 0, hitRadius: 10, hoverRadius: 4 },
-      line: { tension: 0.4, borderWidth: 2 }
+      line: { tension: 0.4, borderWidth: 3 }
     }
   }
 });
@@ -214,7 +221,7 @@ const getDualChartConfig = () => ({
     layout: { padding: { bottom: 10 } },
     responsive: true, maintainAspectRatio: false, animation: { duration: 0 },
     plugins: { legend: { display: false }, tooltip: {
-      mode: 'index', intersect: false, backgroundColor: '#1e2534', titleColor: '#8b9ab0', bodyColor: '#e2e8f0', borderColor: '#2d3748', borderWidth: 1,
+      mode: 'index', intersect: false, backgroundColor: '#1e2534', titleColor: '#8b9ab0', bodyColor: '#e2e8f0', borderColor: '#2d3748', borderWidth: 3,
       callbacks: { label: ctx => { const f = fmtRate(ctx.raw); return ` ${f.val} ${f.unit}`; } },
     }},
     scales: {
@@ -224,7 +231,7 @@ const getDualChartConfig = () => ({
     },
     elements: {
       point: { radius: 0, hitRadius: 10, hoverRadius: 4 },
-      line: { tension: 0.4, borderWidth: 1.5 }
+      line: { tension: 0.4, borderWidth: 3.5 }
     }
   }
 });
@@ -294,8 +301,8 @@ function updateIfaceChart(name, type, rxBps, txBps) {
       type: 'line',
       data: { labels: new Array(MAX_IFACE_POINTS).fill(''),
         datasets: [
-          { data: rxD.slice(), borderColor:'#3b82f6', backgroundColor:'rgba(59,130,246,.08)', borderWidth:1.5, pointRadius:0, tension:0.4, fill:true },
-          { data: txD.slice(), borderColor:'#a855f7', backgroundColor:'rgba(168,85,247,.08)', borderWidth:1.5, pointRadius:0, tension:0.4, fill:true },
+          { data: rxD.slice(), borderColor:'#3b82f6', backgroundColor:'rgba(59,130,246,.08)', borderWidth: 3.5, pointRadius:0, tension:0.4, fill:true },
+          { data: txD.slice(), borderColor:'#a855f7', backgroundColor:'rgba(168,85,247,.08)', borderWidth: 3.5, pointRadius:0, tension:0.4, fill:true },
         ] },
       options: {
         responsive:true, maintainAspectRatio:false, animation:{duration:0},
@@ -516,6 +523,17 @@ async function fetchResources() {
           box = document.createElement('div');
           box.id = `sys-status-${safeId}`;
           box.style = "background:var(--card-bg);border:1px solid var(--border-color);border-radius:12px;padding:16px;";
+          
+          if (obj._error) {
+            box.innerHTML = `
+            <h3 style="font-size:0.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">System Status (${label})</h3>
+            <div style="padding:16px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;color:#f87171;font-size:0.8rem;">
+              <strong>Error:</strong> ${obj._error}<br><span style="font-size:0.7rem;color:var(--muted);display:block;margin-top:6px;">Cek IP, Port, User, Pass pada tab Settings.</span>
+            </div>`;
+            container.appendChild(box);
+            continue;
+          }
+
           box.innerHTML = `
           <h3 style="font-size:0.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">
             System Status (${label})</h3>
@@ -571,9 +589,12 @@ async function fetchResources() {
                                             'linear-gradient(90deg,#3b82f6,#60a5fa)';
       }
 
-      document.getElementById(`mem-used-${safeId}`).textContent  = Math.round(used / 1048576);
-      document.getElementById(`mem-total-${safeId}`).textContent = Math.round(total / 1048576);
-      document.getElementById(`mem-pct-${safeId}`).textContent   = memPct + '%';
+      const memUsedEl = document.getElementById(`mem-used-${safeId}`);
+      const memTotalEl = document.getElementById(`mem-total-${safeId}`);
+      const memPctEl   = document.getElementById(`mem-pct-${safeId}`);
+      if (memUsedEl)  memUsedEl.textContent  = Math.round(used / 1048576);
+      if (memTotalEl) memTotalEl.textContent = Math.round(total / 1048576);
+      if (memPctEl)   memPctEl.textContent   = memPct + '%';
       gsap.to(`#mem-bar-${safeId}`, { width: memPct + '%', duration: .6, ease: 'power2.out' });
 
       const u = obj['uptime'] || '';
@@ -584,7 +605,8 @@ async function fetchResources() {
       const mn=u.match(/(\d+)m/); if(mn) m=+mn[1];
       const sc=u.match(/(\d+)s/); if(sc) s=+sc[1];
 
-      document.getElementById(`uptime-val-${safeId}`).textContent = `${d}d ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      const uptimeEl = document.getElementById(`uptime-val-${safeId}`);
+      if (uptimeEl) uptimeEl.textContent = `${d}d ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
       if (document.getElementById(`up-d-${safeId}`)) {
           document.getElementById(`up-d-${safeId}`).textContent = d;
           document.getElementById(`up-h-${safeId}`).textContent = h;
@@ -603,26 +625,15 @@ async function fetchHealth() {
 
 /* ─── Fetch: Traffic ─────────────────────────────────────────────────────── */
 async function fetchTraffic() {
-  const sel = document.getElementById('mk-device-select');
-  const key = (sel && sel.value) ? sel.value : 'MAIN';
-
-  const data = await fetch(`/api/mikrotik/interface/stats/${key}`).then(r => r.json());
+  const data = await fetch('/api/history/traffic').then(r => r.json());
   if (data.error) throw new Error(data.error);
-  
-  let totalRx = 0, totalTx = 0;
-  if (Array.isArray(data)) {
-    data.forEach(e => {
-      totalRx += parseInt(e['rx-bits-per-second'] || 0);
-      totalTx += parseInt(e['tx-bits-per-second'] || 0);
-    });
-  }
-  updateTrafficUI(totalRx, totalTx);
+  updateTrafficUI(data);
 }
 
 /* ─── Fetch: MikroTik Devices Dropdown ─────────────────────────────────────── */
 async function fetchMikrotikDevices() {
   try {
-    const devices = await fetch('/api/mikrotik/devices', { headers: { 'Authorization': getAuthHeader() } }).then(r => r.json());
+    const devices = await fetch('/api/mikrotik/devices').then(r => r.json());
     if (devices.error) throw new Error(devices.error);
 
     const sel = document.getElementById('mk-device-select');
@@ -878,19 +889,19 @@ async function fetchMikrotikStats() {
 async function fetchAll() {
   try {
     await Promise.all([
-      fetchTechnitium(),
-      fetchResources(),
-      fetchMikrotikStats(),
-      fetchHealth(),
-      fetchPppoe(),
-      fetchConnections(),
-      fetchFirewallAndLogs(),
-      fetchHistory(),
+      fetchTechnitium().catch(e => console.warn('[fetchTechnitium]', e.message)),
+      fetchResources().catch(e => console.warn('[fetchResources]', e.message)),
+      fetchMikrotikStats().catch(e => console.warn('[fetchMikrotikStats]', e.message)),
+      fetchHealth().catch(e => console.warn('[fetchHealth]', e.message)),
+      fetchPppoe().catch(e => console.warn('[fetchPppoe]', e.message)),
+      fetchConnections().catch(e => console.warn('[fetchConnections]', e.message)),
+      fetchFirewallAndLogs().catch(e => console.warn('[fetchFirewallAndLogs]', e.message)),
+      fetchHistory().catch(e => console.warn('[fetchHistory]', e.message)),
     ]);
     document.getElementById('last-update').textContent =
       new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   } catch (err) {
-    showToast('Error: ' + err.message);
+    console.error('[fetchAll]', err.message);
   }
 }
 
@@ -909,7 +920,9 @@ function changeInterval() {
 async function startStatusMonitor() {
   setInterval(async () => {
     try {
-      const { online } = await fetch('/api/alerts/status').then(r => r.json());
+      const res = await fetch('/api/alerts/status');
+      if (!res.ok) return;
+      const { online } = await res.json();
       const banner = document.getElementById('offline-banner');
       if (!online && isOnline) {
         isOnline = false;
@@ -929,13 +942,33 @@ async function doLogout() {
   await fetch('/api/logout', { method: 'POST' });
   window.location.href = '/';
 }
+// Alias for HTML onclick
+const logout = doLogout;
 
 async function testTelegram() {
   try {
-    await fetch('/api/alerts/test', { method: 'POST' });
+    const res = await fetch('/api/alerts/test', { method: 'POST' });
+    const j = await res.json();
+    if (!res.ok) throw new Error(j.error + ' (' + j.solution + ')');
     showToast('Notifikasi test berhasil dikirim ke Telegram!', 4000);
   } catch (err) {
-    showToast('Gagal kirim test Telegram: ' + err.message);
+    showToast('Gagal kirim: ' + err.message, 6000);
+  }
+}
+
+// Called by navbar Alert button
+async function testTelegramAlert() {
+  const btn = document.getElementById('btn-top-alert');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+  try {
+    const res = await fetch('/api/alerts/test', { method: 'POST' });
+    const j = await res.json();
+    if (!res.ok) throw new Error(j.error + (j.solution ? ' → ' + j.solution : ''));
+    showToast('🔔 Test alert berhasil dikirim ke Telegram!', 4000);
+  } catch (err) {
+    showToast('❌ Gagal kirim alert: ' + err.message, 7000);
+  } finally {
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
   }
 }
 
@@ -947,14 +980,14 @@ function initHistoryChart() {
     data: {
       labels: [],
       datasets: [
-        { data: [], borderColor: c1, backgroundColor: c1.replace('rgb', 'rgba').replace(')', ',0.1)'), fill: true, tension: 0.3, borderWidth: 1.5, pointRadius: 0, hitRadius: 10 },
-        { data: [], borderColor: c2, backgroundColor: c2.replace('rgb', 'rgba').replace(')', ',0.1)'), fill: true, tension: 0.3, borderWidth: 1.5, pointRadius: 0, hitRadius: 10 }
+        { data: [], borderColor: c1, backgroundColor: c1.replace('rgb', 'rgba').replace(')', ',0.1)'), fill: true, tension: 0.3, borderWidth: 3.5, pointRadius: 0, hitRadius: 10 },
+        { data: [], borderColor: c2, backgroundColor: c2.replace('rgb', 'rgba').replace(')', ',0.1)'), fill: true, tension: 0.3, borderWidth: 3.5, pointRadius: 0, hitRadius: 10 }
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false, animation: { duration: 0 },
       plugins: { legend: { display: false }, tooltip: {
-        mode: 'index', intersect: false, backgroundColor: '#1e2534', titleColor: '#8b9ab0', bodyColor: '#e2e8f0', borderColor: '#2d3748', borderWidth: 1,
+        mode: 'index', intersect: false, backgroundColor: '#1e2534', titleColor: '#8b9ab0', bodyColor: '#e2e8f0', borderColor: '#2d3748', borderWidth: 3,
         callbacks: { label: ctx => { const f = fmtRate(ctx.raw); return ` ${f.val} ${f.unit}`; } }
       }},
       scales: {
@@ -969,26 +1002,17 @@ function initHistoryChart() {
   // Initialize Dynamic History Charts
   const hCt = document.getElementById('hist-dynamic-graphs-container');
   if (hCt && publicConfig) {
+    hCt.querySelectorAll('.custom-graph').forEach(e => e.remove());
     publicConfig.graphs.forEach((g, idx) => {
       const safeId = 'cg-' + g.id;
-      const colors = [
-          ['rgb(251, 191, 36)', 'rgb(251, 113, 133)'], 
-          ['rgb(56, 189, 248)', 'rgb(244, 114, 182)'], 
-          ['rgb(74, 222, 128)', 'rgb(192, 132, 252)'], 
-          ['rgb(96, 165, 250)', 'rgb(45, 212, 191)']
-      ];
-      const clr = colors[idx % colors.length];
-      
       const canvasId = 'chart-hist-' + safeId;
-      hCt.innerHTML += `
-        <div class="dash-card">
+      hCt.insertAdjacentHTML('beforeend', `
+        <div class="dash-card custom-graph">
           <p style="font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:12px;">
             ${g.title}</p>
           <div style="height:150px;position:relative;"><canvas id="${canvasId}"></canvas></div>
         </div>
-      `;
-      // Can't instantiate immediately because DOM insertion via innerHTML wipes previous DOM references.
-      // So we wait until loop finishes.
+      `);
     });
     
     // Post-insertion instantiation
@@ -1151,7 +1175,7 @@ function renderLogViewer(logs) {
     return `<div style="padding:4px 8px;border-radius:5px;background:${c.bg};border-left:2px solid ${c.border};display:flex;gap:10px;">
       <span style="color:${c.text};min-width:60px;flex-shrink:0;">[${(l.time||'').substring(0,8)}]</span>
       <span style="color:#8b9ab0;min-width:70px;flex-shrink:0;font-size:.7rem;">${(l.topics||'').substring(0,20)}</span>
-      <span style="color:#e2e8f0;">${l.message||''}</span>
+      <span style="color:#fff;">${l.message||''}</span>
     </div>`;
   }).join('')||`<div style="color:var(--muted);padding:16px;text-align:center;">Tidak ada log yang cocok.</div>`;
 }
@@ -1269,9 +1293,19 @@ async function fetchHistory() {
         };
 
         setHistData(chartHistGlobal, 'total');
-        setHistData(chartHistSfp, 'sfp');
-        setHistData(chartHistLacp, 'lacp');
-        setHistData(chartHistArah, 'arah');
+        
+        if (publicConfig && publicConfig.graphs) {
+          publicConfig.graphs.forEach(g => {
+            const mem = customCharts[g.id];
+            if (mem && mem.histChart) {
+              const histChart = mem.histChart;
+              histChart.data.labels = histLabels;
+              histChart.data.datasets[0].data = traffic.map(p => { const o = p.custom?.find(x => x.id === g.id); return o ? o.rx : 0 });
+              histChart.data.datasets[1].data = traffic.map(p => { const o = p.custom?.find(x => x.id === g.id); return o ? o.tx : 0 });
+              histChart.update('none');
+            }
+          });
+        }
 
         document.getElementById('history-points').textContent = `${traffic.length} titik data (Maks 24h)`;
       }
@@ -1281,7 +1315,7 @@ async function fetchHistory() {
     const alertEl = document.getElementById('alert-list');
     const alertBadge = document.getElementById('alert-badge');
     if (!thresholdEvts.length) {
-      alertEl.innerHTML = `<div style="color:var(--muted);font-size:.82rem;text-align:center;padding:20px;display:flex;align-items:center;justify-content:center;gap:8px;"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Tidak ada threshold alert tercatat.</div>`;
+      alertEl.innerHTML = `<div style="color:#94a3b8;font-size:.82rem;text-align:center;padding:20px;display:flex;align-items:center;justify-content:center;gap:8px;"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Tidak ada threshold alert tercatat.</div>`;
       alertBadge.style.display = 'none';
     } else {
       alertBadge.textContent = thresholdEvts.length;
@@ -1292,9 +1326,9 @@ async function fetchHistory() {
         return `<div style="background:${color}11;border:1px solid ${color}33;border-radius:8px;padding:8px 12px;">
           <div style="display:flex;justify-content:space-between;margin-bottom:2px;">
             <span style="font-weight:600;color:${color};font-size:.8rem;">${a.label}</span>
-            <span style="font-size:.7rem;color:var(--muted);">${ts}</span>
+            <span style="font-size:.7rem;color:#94a3b8;">${ts}</span>
           </div>
-          <div style="font-size:.75rem;color:#e2e8f0;">Nilai: <strong>${(a.value||0).toFixed(1)}${a.unit}</strong> &gt; threshold ${a.threshold}${a.unit}</div>
+          <div style="font-size:.75rem;color:#fff;">Nilai: <strong>${(a.value||0).toFixed(1)}${a.unit}</strong> &gt; threshold ${a.threshold}${a.unit}</div>
         </div>`;
       }).join('');
     }
@@ -1302,7 +1336,7 @@ async function fetchHistory() {
     // Uptime / reboot history
     const uptimeEl = document.getElementById('uptime-list');
     if (!uptimeEvts.length) {
-      uptimeEl.innerHTML = `<div style="color:var(--muted);font-size:.82rem;text-align:center;padding:20px;">Belum ada event uptime tercatat.</div>`;
+      uptimeEl.innerHTML = `<div style="color:#94a3b8;font-size:.82rem;text-align:center;padding:20px;">Belum ada event uptime tercatat.</div>`;
     } else {
       uptimeEl.innerHTML = uptimeEvts.map(e => {
         const ts    = new Date(e.ts).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
@@ -1313,7 +1347,7 @@ async function fetchHistory() {
         return `<div style="background:${color}11;border:1px solid ${color}33;border-radius:8px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;">
           <span style="font-size:.82rem;color:#e2e8f0;display:flex;align-items:center;gap:6px;">${iconSvg} ${e.label}</span>
           <div style="text-align:right;">
-            <div style="font-size:.7rem;color:var(--muted);">${ts}</div>
+            <div style="font-size:.7rem;color:#94a3b8;">${ts}</div>
             <div style="font-family:monospace;font-size:.72rem;color:${color};">${e.uptimeStr}</div>
           </div>
         </div>`;
@@ -1659,7 +1693,7 @@ function addCustomGraphNode() {
 
 async function loadSettings() {
   try {
-    const res = await fetch('/api/settings', { headers: { 'Authorization': getAuthHeader() } });
+    const res = await fetch('/api/settings');
     if (res.status === 401 || res.status === 403) return logout();
     const data = await res.json();
     
@@ -1804,7 +1838,6 @@ async function saveSettings(e) {
     const res = await fetch('/api/settings', {
       method: 'POST',
       headers: { 
-        'Authorization': getAuthHeader(),
         'Content-Type': 'application/json' 
       },
       body: JSON.stringify(payload)

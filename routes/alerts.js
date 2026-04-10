@@ -23,10 +23,12 @@ async function sendTelegram(text) {
       body: JSON.stringify({ chat_id: CHAT_ID, text, parse_mode: 'HTML' }),
     });
     const json = await resp.json();
-    if (!json.ok) throw new Error(JSON.stringify(json));
+    if (!json.ok) throw new Error(json.description || JSON.stringify(json));
     console.log('[Alert] Telegram terkirim:', text.substring(0, 60));
+    return { ok: true };
   } catch (err) {
     console.error('[Alert] Gagal kirim Telegram:', err.message);
+    return { ok: false, error: err.message };
   }
 }
 
@@ -94,12 +96,15 @@ router.get('/log', (req, res) => {
 
 router.post('/test', async (req, res) => {
   const routerIp = req.session.routerIp || 'unknown';
-  await sendTelegram(
-    `🔔 <b>Test Notifikasi — 2Arah Tech Dashboard</b>\n\n` +
+  const result = await sendTelegram(
+    ` <b>Test Notifikasi — 2Arah Tech Dashboard</b>\n\n` +
     `Notifikasi Telegram berhasil dikonfigurasi!\n` +
-    `📡 Router: <code>${routerIp}</code>\n` +
-    `🕐 ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`
+    ` Router: <code>${routerIp}</code>\n` +
+    ` ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`
   );
+  if (result && !result.ok) {
+    return res.status(400).json({ error: result.error, solution: "Pastikan Token BOT diawali angka, dan Chat-ID valid tanpa spasi berlebih." });
+  }
   return res.json({ ok: true });
 });
 

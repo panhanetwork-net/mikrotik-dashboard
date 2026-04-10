@@ -402,3 +402,79 @@ canvas { display: block; }
   .dash-table { font-size: .75rem; }
   .dash-table th, .dash-table td { padding: 8px 10px; }
 }
+
+/* ─── NOC ZOOM ENHANCEMENTS (67% Legibility) ─── */
+
+/* Increase Main Traffic RX/TX sizes */
+#rx-current, #tx-current {
+  font-size: 3.8rem !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+  line-height: 1 !important;
+}
+
+/* Custom Graphs values (IN/OUT) */
+span[id^='val-cg-'][id$='-rx'], span[id^='val-cg-'][id$='-tx'] {
+  font-size: 2.2rem !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+  line-height: 1 !important;
+}
+
+/* DNS Values */
+#val-dns-total, #val-dns-blocked {
+  font-size: 2.2rem !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+  line-height: 1 !important;
+}
+
+/* Other metrics like PPPoE total, Ping RTO, Connections */
+#pppoe-total, #pppoe-online, #conn-total, #conn-established, #conn-src-ips, #conn-dst-ports, #ping-stat-status, #ping-stat-consecutive, #ping-stat-total-rto, #ping-stat-total-ok {
+  font-size: 2.6rem !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+}
+
+/* Enhancing Titles with Glow and Spacing */
+p[style*='uppercase'], h3[style*='uppercase'] {
+  letter-spacing: 1.5px !important;
+  font-weight: 800 !important;
+  color: #00e5ff !important;
+  text-shadow: 0 0 5px rgba(0, 229, 255, 0.4) !important;
+}
+
+/* The sub text units */
+#rx-unit, #tx-unit {
+  font-size: 1.2rem !important;
+  font-weight: 600 !important;
+  color: #94a3b8 !important;
+}
+
+/* All text inside cards defaults to light-gray — prevents browser black default */
+.dash-card p {
+   font-size: 0.8rem !important;
+   color: #cbd5e1 !important;
+}
+.dash-card span,
+.dash-card div,
+.dash-card label {
+  color: #e2e8f0;
+}
+
+/* ── Global white default — prevents any element inheriting browser black ── */
+body {
+  color: #f1f5f9;
+}
+
+/* ── Riwayat & Alert section: force all text white, inline color styles override naturally ── */
+#section-history {
+  color: #f1f5f9;
+}
+#section-history .dash-card div:not([style*="color"]),
+#section-history .dash-card span:not([style*="color"]),
+#section-history .dash-card p:not([style*="color"]),
+#section-history .dash-card strong:not([style*="color"]),
+#section-history .dash-card label:not([style*="color"]) {
+  color: #f1f5f9 !important;
+}
