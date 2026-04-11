@@ -4,6 +4,8 @@ const path   = require('path');
 const bcrypt = require('bcryptjs');
 
 const DB_PATH = path.join(__dirname, '..', 'data.json');
+const DEFAULT_ADMIN_USER = (process.env.DASHBOARD_USER || 'admin').trim();
+const DEFAULT_ADMIN_PASS = process.env.DASHBOARD_PASS || 'Panhanet213';
 
 // ─── Load / Init JSON store ───────────────────────────────────────────────────
 function loadDB() {
@@ -24,16 +26,23 @@ function saveDB(data) {
 // ─── Seed default admin if no users exist ────────────────────────────────────
 let _db = loadDB();
 if (_db.users.length === 0) {
-  const hash = bcrypt.hashSync('Admin@2Arah', 12);
+  const hash = bcrypt.hashSync(DEFAULT_ADMIN_PASS, 12);
   _db.users.push({
     id:            1,
-    username:      'admin',
+    username:      DEFAULT_ADMIN_USER,
     password_hash: hash,
     role:          'admin',
     created_at:    new Date().toISOString(),
   });
   saveDB(_db);
-  console.log('[DB] Default admin created: admin / Admin@2Arah');
+  console.log(`[DB] Default admin created from .env: ${DEFAULT_ADMIN_USER}`);
+} else {
+  const envAdmin = _db.users.find(u => u.username === DEFAULT_ADMIN_USER);
+  if (envAdmin && !bcrypt.compareSync(DEFAULT_ADMIN_PASS, envAdmin.password_hash)) {
+    envAdmin.password_hash = bcrypt.hashSync(DEFAULT_ADMIN_PASS, 12);
+    saveDB(_db);
+    console.log(`[DB] Admin password synced from .env for user: ${DEFAULT_ADMIN_USER}`);
+  }
 }
 
 // ─── Exported helpers ─────────────────────────────────────────────────────────

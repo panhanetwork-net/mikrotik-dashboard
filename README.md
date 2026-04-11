@@ -1,4 +1,4 @@
-# 2Arah Tech MikroTik Dashboard
+﻿# Panha Network MikroTik Dashboard
 
 Dashboard monitoring real-time berbasis Node.js dan RouterOS REST API untuk perangkat MikroTik. Aplikasi ini menggantikan PRTG dan memberikan tampilan UI yang modern, ringan, dan informatif untuk Network Operations Center (NOC).
 
@@ -44,4 +44,6 @@ Seluruh hardcode kredensial, IP dari berbagai router, dan port API semuanya tela
 | `SESSION_SECRET` | Kunci sesi login Express.js |
 
 ## Lisensi
-Internal Use Only - 2Arah Tech NOC.
+Internal Use Only - Panha Network NOC.
+
+

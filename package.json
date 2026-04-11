@@ -1,7 +1,7 @@
-{
+﻿{
   "name": "mikrotik-dashboard",
   "version": "2.0.0",
-  "description": "2Arah Tech — MikroTik RouterOS v7 Dashboard",
+  "description": "Panha Network — MikroTik RouterOS v7 Dashboard",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -19,3 +19,5 @@
     "node": ">=18.0.0"
   }
 }
+
+

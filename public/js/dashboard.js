@@ -10,7 +10,7 @@ const PORT_NAMES = {
 
 /* ─── State ─────────────────────────────────────────────────────────────── */
 let pollTimer    = null;
-let pollInterval = 3000;
+let pollInterval = 2000;
 let rxPeak = 0, txPeak = 0;
 let prevRxBytes = {}, prevTxBytes = {}, prevTimestamp = null;
 let chartRx, chartTx, chartDns;

@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 
 /**
  * History module — in-memory ring buffers for:
@@ -10,7 +10,7 @@
 const MAX_TRAFFIC_POINTS = 1440; // 24h at 1 poll/minute
 const MAX_EVENTS         = 200;
 
-// ─── Ring buffers ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ Ring buffers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const trafficHistory  = [];   // { ts, total: {rx,tx}, sfp: {rx,tx}, lacp: {rx,tx}, arah: {rx,tx} }
 const uptimeEvents    = [];   // { ts, event:'start'|'reboot', uptimeStr }
 const thresholdAlerts = [];   // { ts, type, value, threshold, routerIp }
@@ -22,7 +22,7 @@ let prevUptimeSeconds = null;
 const alertCooldown = {}; // { 'cpu'|'cpu-temp'|'board-temp': lastSentMs }
 const COOLDOWN_MS   = 5 * 60 * 1000; // 5 minutes
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function pushCapped(arr, item, max) {
   arr.push(item);
   if (arr.length > max) arr.shift();
@@ -39,7 +39,7 @@ function uptimeToSeconds(upStr) {
   return s;
 }
 
-// ─── Record traffic point ─────────────────────────────────────────────────────
+// â”€â”€â”€ Record traffic point â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function recordTraffic(totalRx, totalTx, customGraphs) {
   pushCapped(trafficHistory, {
     ts: Date.now(),
@@ -48,7 +48,7 @@ function recordTraffic(totalRx, totalTx, customGraphs) {
   }, MAX_TRAFFIC_POINTS);
 }
 
-// ─── Record uptime + detect reboots ──────────────────────────────────────────
+// â”€â”€â”€ Record uptime + detect reboots â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function recordUptime(uptimeStr) {
   const currentSec = uptimeToSeconds(uptimeStr);
   if (prevUptimeSeconds === null) {
@@ -60,7 +60,7 @@ function recordUptime(uptimeStr) {
       label: 'Dashboard mulai monitoring'
     }, MAX_EVENTS);
   } else if (currentSec < prevUptimeSeconds - 30) {
-    // Uptime went backwards > 30s → router rebooted
+    // Uptime went backwards > 30s â†’ router rebooted
     pushCapped(uptimeEvents, {
       ts: Date.now(),
       event: 'reboot',
@@ -71,7 +71,7 @@ function recordUptime(uptimeStr) {
   prevUptimeSeconds = currentSec;
 }
 
-// ─── Threshold check & alert ─────────────────────────────────────────────────
+// â”€â”€â”€ Threshold check & alert â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function checkThresholds({ cpuLoad, cpuTemp, boardTemp, routerIp, sendTelegram }) {
   const now = Date.now();
 
@@ -81,24 +81,24 @@ async function checkThresholds({ cpuLoad, cpuTemp, boardTemp, routerIp, sendTele
       value:     cpuLoad,
       threshold: 80,
       unit:      '%',
-      label:     '🔥 CPU Load',
-      emoji:     '⚡',
+      label:     'ðŸ”¥ CPU Load',
+      emoji:     'âš¡',
     },
     {
       key:       'cpu-temp',
       value:     cpuTemp,
       threshold: 75,
-      unit:      '°C',
-      label:     '🌡️ CPU Temperature',
-      emoji:     '🔴',
+      unit:      'Â°C',
+      label:     'ðŸŒ¡ï¸ CPU Temperature',
+      emoji:     'ðŸ”´',
     },
     {
       key:       'board-temp',
       value:     boardTemp,
       threshold: 60,
-      unit:      '°C',
-      label:     '🌡️ Board Temperature',
-      emoji:     '🟠',
+      unit:      'Â°C',
+      label:     'ðŸŒ¡ï¸ Board Temperature',
+      emoji:     'ðŸŸ ',
     },
   ];
 
@@ -127,18 +127,18 @@ async function checkThresholds({ cpuLoad, cpuTemp, boardTemp, routerIp, sendTele
     const ts = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
     const msg =
       `${check.emoji} <b>Threshold Alert — ${check.label}</b>\n\n` +
-      `📡 <b>Router:</b> <code>${routerIp}</code>\n` +
-      `📊 <b>Nilai saat ini:</b> ${check.value.toFixed(1)}${check.unit}\n` +
-      `⚠️ <b>Batas:</b> ${check.threshold}${check.unit}\n` +
-      `🕐 <b>Waktu:</b> ${ts}\n` +
-      `🔧 <b>Sistem:</b> 2Arah Tech — MikroTik Dashboard`;
+      `ðŸ“¡ <b>Router:</b> <code>${routerIp}</code>\n` +
+      `ðŸ“Š <b>Nilai saat ini:</b> ${check.value.toFixed(1)}${check.unit}\n` +
+      `âš ï¸ <b>Batas:</b> ${check.threshold}${check.unit}\n` +
+      `ðŸ• <b>Waktu:</b> ${ts}\n` +
+      `ðŸ”§ <b>Sistem:</b> Panha Network — MikroTik Dashboard`;
 
     console.log(`[Threshold] ${check.label} = ${check.value}${check.unit} > ${check.threshold}${check.unit} — Telegram dikirim`);
     await sendTelegram(msg).catch(e => console.error('[Threshold] Telegram error:', e.message));
   }
 }
 
-// ─── Express router ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Express router â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const express = require('express');
 const router  = express.Router();
 
@@ -156,3 +156,5 @@ router.get('/threshold-alerts', (req, res) => {
 });
 
 module.exports = { router, recordTraffic, recordUptime, checkThresholds };
+
+

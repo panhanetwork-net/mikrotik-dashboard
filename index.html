@@ -1,11 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>2Arah Tech — MikroTik Dashboard</title>
-  <meta name="description" content="Real-time MikroTik RouterOS v7 Network Dashboard by 2Arah Tech" />
+  <title>Panha Network — MikroTik Dashboard</title>
+  <meta name="description" content="Real-time MikroTik RouterOS v7 Network Dashboard by Panha Network" />
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -66,7 +66,7 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* ─── Scrollbar ─── */
+    /* â”€â”€â”€ Scrollbar â”€â”€â”€ */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -85,7 +85,7 @@
       background: var(--accent);
     }
 
-    /* ─── Login overlay ─── */
+    /* â”€â”€â”€ Login overlay â”€â”€â”€ */
     #login-screen {
       position: fixed;
       inset: 0;
@@ -106,7 +106,7 @@
       box-shadow: 0 0 60px rgba(59, 130, 246, 0.08);
     }
 
-    /* ─── Card styles ─── */
+    /* â”€â”€â”€ Card styles â”€â”€â”€ */
     .dash-card {
       background: var(--card);
       border: 1px solid var(--border);
@@ -138,7 +138,7 @@
       opacity: 1;
     }
 
-    /* ─── Stat badge ─── */
+    /* â”€â”€â”€ Stat badge â”€â”€â”€ */
     .stat-badge {
       display: inline-flex;
       align-items: center;
@@ -154,7 +154,7 @@
       text-transform: uppercase;
     }
 
-    /* ─── Live dot ─── */
+    /* â”€â”€â”€ Live dot â”€â”€â”€ */
     .live-dot {
       width: 7px;
       height: 7px;
@@ -178,7 +178,7 @@
       }
     }
 
-    /* ─── Progress bar ─── */
+    /* â”€â”€â”€ Progress bar â”€â”€â”€ */
     .progress-bar {
       height: 6px;
       border-radius: 99px;
@@ -192,7 +192,7 @@
       transition: width .6s cubic-bezier(.4, 0, .2, 1);
     }
 
-    /* ─── Table ─── */
+    /* â”€â”€â”€ Table â”€â”€â”€ */
     .dash-table {
       width: 100%;
       border-collapse: collapse;
@@ -228,7 +228,7 @@
       border-bottom: none;
     }
 
-    /* ─── Status pill ─── */
+    /* â”€â”€â”€ Status pill â”€â”€â”€ */
     .status-up {
       display: inline-flex;
       align-items: center;
@@ -255,7 +255,7 @@
       font-weight: 600;
     }
 
-    /* ─── Input ─── */
+    /* â”€â”€â”€ Input â”€â”€â”€ */
     .dash-input {
       background: rgba(255, 255, 255, 0.04);
       border: 1px solid var(--border);
@@ -277,7 +277,7 @@
       color: var(--muted);
     }
 
-    /* ─── Button ─── */
+    /* â”€â”€â”€ Button â”€â”€â”€ */
     .btn-primary {
       background: var(--accent);
       color: #fff;
@@ -306,7 +306,7 @@
       cursor: not-allowed;
     }
 
-    /* ─── Header ─── */
+    /* â”€â”€â”€ Header â”€â”€â”€ */
     .topbar {
       background: rgba(15, 17, 23, 0.85);
       backdrop-filter: blur(16px);
@@ -317,7 +317,7 @@
       z-index: 50;
     }
 
-    /* ─── Loader ─── */
+    /* â”€â”€â”€ Loader â”€â”€â”€ */
     .spinner {
       width: 20px;
       height: 20px;
@@ -334,7 +334,7 @@
       }
     }
 
-    /* ─── Error toast ─── */
+    /* â”€â”€â”€ Error toast â”€â”€â”€ */
     #toast {
       position: fixed;
       bottom: 1.5rem;
@@ -352,13 +352,13 @@
       max-width: 320px;
     }
 
-    /* ─── Fade-in util ─── */
+    /* â”€â”€â”€ Fade-in util â”€â”€â”€ */
     .fade-up {
       opacity: 0;
       transform: translateY(18px);
     }
 
-    /* ─── Logo SVG embed area ─── */
+    /* â”€â”€â”€ Logo SVG embed area â”€â”€â”€ */
     .logo-area img {
       height: 32px;
       width: auto;
@@ -375,7 +375,7 @@
       display: block;
     }
 
-    /* ─── Responsive ─── */
+    /* â”€â”€â”€ Responsive â”€â”€â”€ */
     @media (max-width: 768px) {
       .login-card {
         margin: 1rem;
@@ -386,17 +386,17 @@
 
 <body class="dark bg-surface text-slate-200">
 
-  <!-- ════════════════════════════════════════════
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      LOGIN SCREEN
-════════════════════════════════════════════ -->
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
   <div id="login-screen">
     <div class="login-card fade-up" id="login-card">
       <!-- Logo -->
       <div class="flex items-center gap-3 mb-7">
-        <!-- 2Arah Tech Logo — actual PNG embedded (no bg), white on dark -->
+        <!-- Panha Network Logo — actual PNG embedded (no bg), white on dark -->
         <img
-          src="data:image/png;base64,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"
-          alt="2Arah Tech" style="height:60px;width:auto;filter:brightness(0) invert(1);" />
+          src="/logo_panha.png"
+          alt="Panha Network" style="height:60px;width:auto;" />
       </div>
 
       <h1 class="text-xl font-semibold text-white mb-1">MikroTik Dashboard</h1>
@@ -431,20 +431,20 @@
     </div>
   </div>
 
-  <!-- ════════════════════════════════════════════
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      MAIN DASHBOARD
-════════════════════════════════════════════ -->
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
   <div id="dashboard" class="hidden min-h-screen flex flex-col">
 
     <!-- TOP BAR -->
     <header class="topbar px-5 py-3 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <!-- 2Arah Tech Logo (header) — actual PNG embedded -->
+        <!-- Panha Network Logo (header) — actual PNG embedded -->
         <img
-          src="data:image/png;base64,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"
-          alt="2Arah Tech" style="height:30px;width:auto;filter:brightness(0) invert(1);" />
+          src="/logo_panha.png"
+          alt="Panha Network" style="height:30px;width:auto;" />
         <div class="leading-4 hidden">
-          <div class="text-white font-bold text-sm">2Arah Tech</div>
+          <div class="text-white font-bold text-sm">Panha Network</div>
           <div class="text-muted text-xs">MikroTik Monitor</div>
         </div>
 
@@ -482,7 +482,7 @@
     <!-- MAIN CONTENT -->
     <main class="flex-1 px-4 sm:px-6 py-6 max-w-screen-2xl mx-auto w-full">
 
-      <!-- ── Row 1: Traffic Charts ── -->
+      <!-- â”€â”€ Row 1: Traffic Charts â”€â”€ -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
 
         <!-- Download Chart -->
@@ -545,7 +545,7 @@
         </div>
       </div>
 
-      <!-- ── Row 2: System Status ── -->
+      <!-- â”€â”€ Row 2: System Status â”€â”€ -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
 
         <!-- CPU -->
@@ -618,7 +618,7 @@
         </div>
       </div>
 
-      <!-- ── Row 3: Interface Table ── -->
+      <!-- â”€â”€ Row 3: Interface Table â”€â”€ -->
       <div class="dash-card fade-up" id="card-interfaces">
         <div class="flex items-center justify-between mb-4">
           <div>
@@ -636,8 +636,8 @@
               <tr>
                 <th>Interface</th>
                 <th>Status</th>
-                <th>RX (↓)</th>
-                <th>TX (↑)</th>
+                <th>RX (â†“)</th>
+                <th>TX (â†‘)</th>
                 <th>RX Bytes Total</th>
                 <th>TX Bytes Total</th>
                 <th>MAC Address</th>
@@ -658,7 +658,7 @@
 
       <!-- Footer -->
       <div class="mt-6 flex items-center justify-between text-xs text-muted pb-4">
-        <span>© 2026 <span class="text-accent font-semibold">2Arah Tech</span> — MikroTik Dashboard</span>
+        <span>© 2026 <span class="text-accent font-semibold">Panha Network</span> — MikroTik Dashboard</span>
         <span>RouterOS v7 REST API</span>
       </div>
 
@@ -667,20 +667,20 @@
 
   <!-- Toast -->
   <div id="toast">
-    ⚠ <span id="toast-msg">Error</span>
+    âš  <span id="toast-msg">Error</span>
   </div>
 
-  <!-- ════════════════════════════════════════════
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      JAVASCRIPT
-════════════════════════════════════════════ -->
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
   <script>
     'use strict';
 
-    /* ════════════════════════════════════════════
+    /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
        MODE: DEMO (Dummy Data Simulator)
        Ganti DEMO_MODE = false setelah deploy ke MikroTik
        untuk mengaktifkan RouterOS REST API mode.
-    ════════════════════════════════════════════ */
+    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
     const DEMO_MODE = false;
     const API_HOST = '192.168.20.1'; // Hardcoded — diambil otomatis saat deploy
 
@@ -696,7 +696,7 @@
     const rxData = new Array(MAX_POINTS).fill(0);
     const txData = new Array(MAX_POINTS).fill(0);
 
-    /* ─── Demo internal state ─── */
+    /* â”€â”€â”€ Demo internal state â”€â”€â”€ */
     let _demoUptimeSec = 3 * 86400 + 7 * 3600 + 42 * 60 + 11; // 3d 7h 42m 11s
     let _demoCpu = 18;
     let _demoMemUsed = 38 * 1024 * 1024; // 38 MB
@@ -714,7 +714,7 @@
       { name: 'wlan1', type: 'wlan', mac: 'D4:CA:6D:A1:2F:47', rxSplit: 0.05, txSplit: 0.05 },
     ];
 
-    /* ─── Utility ─── */
+    /* â”€â”€â”€ Utility â”€â”€â”€ */
     function fmt(bytes) {
       if (bytes === null || bytes === undefined || isNaN(bytes)) return '0 B';
       if (bytes < 1024) return bytes + ' B';
@@ -753,12 +753,12 @@
       setTimeout(() => gsap.to(t, { opacity: 0, y: 8, duration: .3, onComplete: () => t.style.display = 'none' }), dur);
     }
 
-    /* ─── AUTH ─── */
+    /* â”€â”€â”€ AUTH â”€â”€â”€ */
     function buildAuth(user, pass) {
       return 'Basic ' + btoa(unescape(encodeURIComponent(user + ':' + pass)));
     }
 
-    /* ─── API FETCH (real mode) ─── */
+    /* â”€â”€â”€ API FETCH (real mode) â”€â”€â”€ */
     async function apiFetch(path, options = {}) {
       const host = window.location.hostname || API_HOST;
       const url = `http://${host}${path}`;
@@ -771,9 +771,9 @@
       return res.json();
     }
 
-    /* ════════════════════════════════════════════
+    /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
        DEMO DATA GENERATORS
-    ════════════════════════════════════════════ */
+    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
     function demoJitter(base, pct = 0.25) {
       // Smooth random walk with bounded jitter
       return Math.max(0, base + base * pct * (Math.random() * 2 - 1));
@@ -872,9 +872,9 @@
       tbody.innerHTML = rows;
     }
 
-    /* ════════════════════════════════════════════
+    /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
        REAL API FUNCTIONS (aktif saat DEMO_MODE=false)
-    ════════════════════════════════════════════ */
+    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
     async function realFetchTraffic() {
       const ifaces = await apiFetch('/rest/interface?running=true');
       const names = ifaces.map(i => i.name).join(',');
@@ -965,7 +965,7 @@
       prevTimestamp = Date.now();
     }
 
-    /* ─── Shared UI update (traffic) ─── */
+    /* â”€â”€â”€ Shared UI update (traffic) â”€â”€â”€ */
     function updateTrafficUI(rxBps, txBps) {
       const rx = fmtRate(rxBps);
       const tx = fmtRate(txBps);
@@ -1002,7 +1002,7 @@
       return map[(type || '').toLowerCase()] || '#3b82f6';
     }
 
-    /* ─── CHARTS ─── */
+    /* â”€â”€â”€ CHARTS â”€â”€â”€ */
     let chartRx, chartTx;
     const LABELS = Array.from({ length: MAX_POINTS }, () => '');
 
@@ -1061,7 +1061,7 @@
       chartTx.update('none');
     }
 
-    /* ─── POLLING ─── */
+    /* â”€â”€â”€ POLLING â”€â”€â”€ */
     function changeInterval() {
       pollInterval = parseInt(document.getElementById('interval-select').value);
       clearInterval(pollTimer);
@@ -1086,7 +1086,7 @@
       }
     }
 
-    /* ─── LOGIN ─── */
+    /* â”€â”€â”€ LOGIN â”€â”€â”€ */
     async function handleLogin(e) {
       e.preventDefault();
       const user = document.getElementById('f-user').value.trim();
@@ -1166,7 +1166,7 @@
       });
     }
 
-    /* ─── INIT ─── */
+    /* â”€â”€â”€ INIT â”€â”€â”€ */
     (function init() {
       gsap.to('#login-card', { opacity: 1, y: 0, duration: .6, ease: 'power3.out', delay: .1 });
 
@@ -1189,3 +1189,5 @@
 </body>
 
 </html>
+
+

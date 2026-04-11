@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 const fetch = require('node-fetch');
 const { logAlert } = require('../db/database');
 
@@ -9,7 +9,7 @@ const INTERVAL = parseInt(process.env.HEALTH_CHECK_INTERVAL || '30000', 10);
 // Track status tiap router
 const routerStatus = {};
 
-// ─── Send Telegram message (exported for history.js) ─────────────────────────
+// â”€â”€â”€ Send Telegram message (exported for history.js) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function sendTelegram(text) {
   if (!BOT_TOKEN || !CHAT_ID) {
     console.warn('[Alert] TELEGRAM_BOT_TOKEN atau TELEGRAM_CHAT_ID tidak dikonfigurasi.');
@@ -32,23 +32,23 @@ async function sendTelegram(text) {
   }
 }
 
-// ─── Build UP/DOWN message ────────────────────────────────────────────────────
+// â”€â”€â”€ Build UP/DOWN message â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function buildMessage(type, routerIp) {
   const ts = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
-  const icon = type === 'DOWN' ? '🔴' : '🟢';
+  const icon = type === 'DOWN' ? 'ðŸ”´' : 'ðŸŸ¢';
   const state = type === 'DOWN' ? 'OFFLINE / DOWN' : 'ONLINE / UP';
   return (
     `${icon} <b>MikroTik Router ${state}</b>\n\n` +
     `<b>Router IP:</b> <code>${routerIp}</code>\n` +
     `<b>Waktu:</b> ${ts}\n` +
-    `<b>Sistem:</b> 2Arah Tech — MikroTik Dashboard\n\n` +
+    `<b>Sistem:</b> Panha Network — MikroTik Dashboard\n\n` +
     (type === 'DOWN'
       ? `Router tidak dapat dijangkau. Tim NOC harap segera cek koneksi.`
       : `Router kembali online dan dapat dijangkau.`)
   );
 }
 
-// ─── Check single router ──────────────────────────────────────────────────────
+// â”€â”€â”€ Check single router â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function checkRouter(routerIp, { mikrotikFetch }) {
   let online = false;
   // Retry mechanism for false positives over VPN
@@ -79,7 +79,7 @@ async function checkRouter(routerIp, { mikrotikFetch }) {
   return online;
 }
 
-// ─── Express router ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Express router â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const express = require('express');
 const router = express.Router();
 
@@ -97,7 +97,7 @@ router.get('/log', (req, res) => {
 router.post('/test', async (req, res) => {
   const routerIp = req.session.routerIp || 'unknown';
   const result = await sendTelegram(
-    ` <b>Test Notifikasi — 2Arah Tech Dashboard</b>\n\n` +
+    ` <b>Test Notifikasi — Panha Network Dashboard</b>\n\n` +
     `Notifikasi Telegram berhasil dikonfigurasi!\n` +
     ` Router: <code>${routerIp}</code>\n` +
     ` ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`
@@ -108,7 +108,7 @@ router.post('/test', async (req, res) => {
   return res.json({ ok: true });
 });
 
-// ─── Start health monitor (with threshold checking) ───────────────────────────
+// â”€â”€â”€ Start health monitor (with threshold checking) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function startHealthMonitor(mikrotikFetch, checkThresholds) {
   console.log(`[Alert] Health monitor dimulai — interval ${INTERVAL}ms`);
 
@@ -177,3 +177,5 @@ function registerRouter(routerIp) {
 }
 
 module.exports = { router, startHealthMonitor, registerRouter, checkRouter, sendTelegram };
+
+

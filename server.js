@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 // Manual .env loader — no dotenv package required
 const fs = require('fs'), path = require('path');
 try {
@@ -41,7 +41,7 @@ const requireAuth = require('./middleware/requireAuth');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ─── Middleware ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ Middleware â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -55,7 +55,7 @@ app.use(session({
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ─── Routes ───────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Routes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.use('/api', authRouter);
 
 app.use((req, res, next) => {
@@ -63,7 +63,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// ─── Public Config (no auth required — registered BEFORE requireAuth) ─────
+// â”€â”€â”€ Public Config (no auth required — registered BEFORE requireAuth) â”€â”€â”€â”€â”€
 app.get('/api/mikrotik/public-config', (req, res) => {
   const customGraphs = [];
   for (const key of Object.keys(process.env)) {
@@ -91,7 +91,7 @@ app.use('/api/ping', requireAuth, pingRouter);
 app.use('/api/snmp', requireAuth, snmpRouter);
 app.use('/api/settings', requireAuth, settingsRouter);
 
-// ─── Technitium DNS Proxy ───────────────────────────────────────────────────
+// â”€â”€â”€ Technitium DNS Proxy â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.get('/api/technitium/chart', requireAuth, async (req, res) => {
   try {
     const dURL = process.env.TECHNITIUM_URL;
@@ -113,7 +113,7 @@ app.get('/api/technitium/chart', requireAuth, async (req, res) => {
   }
 });
 
-// ─── Pages ───────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Pages â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.get('/', (req, res) => {
   if (req.session && req.session.userId) return res.redirect('/dashboard');
   return res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -128,27 +128,27 @@ app.get('/dhcp', requireAuth, (req, res) =>
 app.get('/connections', requireAuth, (req, res) =>
   res.sendFile(path.join(__dirname, 'public', 'connections.html')));
 
-// ─── 404 / Error ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ 404 / Error â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));
 app.use((err, req, res, next) => {
   console.error('[Error]', err.message);
   res.status(500).json({ error: 'Internal server error' });
 });
 
-// ─── Start ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Start â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.listen(PORT, () => {
-  console.log(`\n  2Arah Tech — MikroTik Dashboard`);
-  console.log(`  ─────────────────────────────────────`);
+  console.log(`\n  Panha Network — MikroTik Dashboard`);
+  console.log(`  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€`);
   console.log(`  Server berjalan di http://localhost:${PORT}`);
   console.log(`  Telegram alerts: ${process.env.TELEGRAM_BOT_TOKEN ? 'AKTIF' : 'TIDAK DIKONFIGURASI'}`);
-  console.log(`  ─────────────────────────────────────\n`);
+  console.log(`  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€\n`);
 
   startHealthMonitor(mikrotikFetch, checkThresholds);
   startPingMonitor();
   startTrafficRecorder();
 });
 
-// ─── Traffic Recorder (fills /api/history/traffic ring buffer) ────────────────
+// â”€â”€â”€ Traffic Recorder (fills /api/history/traffic ring buffer) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const { runCommand } = require('./routes/routeros-api');
 const { recordTraffic, recordUptime } = require('./routes/history');
 
@@ -272,3 +272,5 @@ function startTrafficRecorder() {
   trafficSnapshot();                        // first snapshot immediately
   setInterval(trafficSnapshot, 30 * 1000); // every 30s
 }
+
+

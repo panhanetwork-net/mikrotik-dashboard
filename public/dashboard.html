@@ -4,13 +4,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>2Arah Tech — MikroTik Dashboard</title>
+  <title>Panha Network — MikroTik Dashboard</title>
   <link rel="stylesheet" href="/css/style.css?v=3" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script src="/js/dashboard.js" defer></script>
   <style>
-    /* ─── Tab Nav Styles ─── */
+    /* â”€â”€â”€ Tab Nav Styles â”€â”€â”€ */
     .tab-nav {
       display: flex;
       align-items: center;
@@ -54,7 +54,7 @@
       flex-shrink: 0;
     }
 
-    /* ─── Tab sections ─── */
+    /* â”€â”€â”€ Tab sections â”€â”€â”€ */
     .tab-section {
       display: none;
     }
@@ -63,7 +63,7 @@
       display: block;
     }
 
-    /* ─── Top bar rank items ─── */
+    /* â”€â”€â”€ Top bar rank items â”€â”€â”€ */
     .rank-bar-row {
       display: flex;
       align-items: center;
@@ -102,8 +102,8 @@
     <!-- Logo + host -->
     <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
       <img
-        src="data:image/png;base64,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"
-        alt="2Arah Tech" style="height:28px;width:auto;filter:brightness(0) invert(1);" />
+        src="/logo_panha.png"
+        alt="Panha Network" style="height:28px;width:auto;" />
       <div id="header-host-label"
         style="font-size:.72rem;font-family:monospace;color:#3b82f6;font-weight:600;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);border-radius:20px;padding:2px 10px;">
       </div>
@@ -179,15 +179,12 @@
         <span style="font-size:.72rem;color:var(--muted);">Live</span>
       </div>
       <div style="font-size:.72rem;color:var(--muted);">Diperbarui: <span id="last-update">--</span></div>
-      <select id="interval-select" onchange="changeInterval()"
-        style="background:var(--card);border:1px solid var(--border);color:var(--muted);font-size:.72rem;border-radius:8px;padding:3px 7px;outline:none;cursor:pointer;">
-        <option value="2000" selected>2s</option>
-        <option value="3000">3s</option>
-        <option value="5000">5s</option>
-        <option value="10000">10s</option>
-      </select>
+      <input type="hidden" id="interval-select" value="2000" />
       <!-- Navbar Actions -->
       <div style="display:flex;align-items:center;gap:12px;">
+        <button id="mobile-menu-btn" onclick="document.querySelector('.tab-nav').classList.toggle('show-mobile')" style="display:none;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#e2e8f0;border-radius:6px;padding:4px 8px;cursor:pointer;align-items:center;justify-content:center;transition:0.2s;">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+        </button>
         <button onclick="document.getElementById('settings-modal').style.display='flex';loadSettings();" style="background:#3b82f622;border:1px solid #3b82f644;color:#60a5fa;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:.7rem;font-weight:600;display:flex;align-items:center;gap:6px;transition:0.2s;">
           <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
           Settings
@@ -197,6 +194,7 @@
           Alert
         </button>
         <button onclick="logout()" class="tab-btn" style="background:#ef444422;border:1px solid #ef444444;color:#f87171;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:.7rem;font-weight:600;display:flex;align-items:center;gap:6px;">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
           Keluar
         </button>
       </div>
@@ -206,9 +204,9 @@
   <!-- MAIN CONTENT -->
   <main style="padding:20px 28px;">
 
-    <!-- ══════════════════════════════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <!-- TAB: DASHBOARD                                      -->
-    <!-- ══════════════════════════════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <section id="section-dashboard" class="tab-section visible">
 
       <!-- 6-Graph Core Dashboard + Dynamics -->
@@ -255,8 +253,8 @@
           <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
             <p id="dns-title" style="font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">Technitium DNS <span id="val-dns-time" style="font-weight:normal;opacity:0.6;"></span></p>
             <div style="display:flex;gap:12px;font-size:0.7rem;color:#fff;font-weight:600;">
-              <div><span style="color:#60a5fa">●</span> Total <span id="val-dns-total">0</span></div>
-              <div><span style="color:#2dd4bf">●</span> Blocked <span id="val-dns-blocked">0</span></div>
+              <div><span style="color:#60a5fa">&#9679;</span> Total <span id="val-dns-total">0</span></div>
+              <div><span style="color:#2dd4bf">&#9679;</span> Blocked <span id="val-dns-blocked">0</span></div>
             </div>
           </div>
           <div style="height:140px;position:relative;">
@@ -295,8 +293,8 @@
               <tr>
                 <th>Interface</th>
                 <th>Status</th>
-                <th>RX (↓)</th>
-                <th>TX (↑)</th>
+                <th>RX (&darr;)</th>
+                <th>TX (&uarr;)</th>
                 <th>RX Bytes</th>
                 <th>TX Bytes</th>
                 <th>MAC Address</th>
@@ -314,9 +312,9 @@
 
     </section>
 
-    <!-- ═══════════════════════════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <!-- TAB: PPPOE SESSIONS                             -->
-    <!-- ═══════════════════════════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <section id="section-pppoe" class="tab-section">
 
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
@@ -372,9 +370,9 @@
 
     </section>
 
-    <!-- ══════════════════════════════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <!-- TAB: KONEKSI AKTIF                                 -->
-    <!-- ══════════════════════════════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <section id="section-connections" class="tab-section">
 
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
@@ -417,11 +415,11 @@
       <!-- Top charts side by side -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
         <div class="dash-card">
-          <h3 style="color:#fff;font-weight:600;font-size:.85rem;margin-bottom:12px;">🔝 Top Destination Ports</h3>
+          <h3 style="color:#fff;font-weight:600;font-size:.85rem;margin-bottom:12px;">ðŸ” Top Destination Ports</h3>
           <div id="top-ports-list" style="display:flex;flex-direction:column;gap:8px;"></div>
         </div>
         <div class="dash-card">
-          <h3 style="color:#fff;font-weight:600;font-size:.85rem;margin-bottom:12px;">🌐 Top Source IPs</h3>
+          <h3 style="color:#fff;font-weight:600;font-size:.85rem;margin-bottom:12px;">ðŸŒ Top Source IPs</h3>
           <div id="top-ips-list" style="display:flex;flex-direction:column;gap:8px;"></div>
         </div>
       </div>
@@ -457,9 +455,9 @@
 
     </section>
 
-    <!-- ══════════════════════════════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <!-- TAB: BANDWIDTH                                      -->
-    <!-- ══════════════════════════════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <section id="section-bandwidth" class="tab-section">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
         <div>
@@ -480,7 +478,7 @@
               <tr>
                 <th>Nama Queue</th>
                 <th>Target IP</th>
-                <th>Max Limit (↓/↑)</th>
+                <th>Max Limit (&darr;/&uarr;)</th>
                 <th>RX Used</th>
                 <th>TX Used</th>
                 <th>Bytes Total</th>
@@ -498,9 +496,9 @@
       </div>
     </section>
 
-    <!-- ══════════════════════════════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <!-- TAB: FIREWALL & LOG                                 -->
-    <!-- ══════════════════════════════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <section id="section-firewall" class="tab-section">
 
       <!-- Brute Force / Port Scan Alert Panel -->
@@ -591,9 +589,9 @@
       </div>
     </section>
 
-    <!-- ══════════════════════════════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <!-- TAB: DNS CACHE                                      -->
-    <!-- ══════════════════════════════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <section id="section-dns" class="tab-section">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
         <div>
@@ -632,9 +630,9 @@
       </div>
     </section>
 
-    <!-- ══════════════════════════════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <!-- TAB: RIWAYAT & ALERT                                -->
-    <!-- ══════════════════════════════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <section id="section-history" class="tab-section">
 
       <!-- Traffic History Chart -->
@@ -676,7 +674,7 @@
               <path stroke-linecap="round" stroke-linejoin="round"
                 d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg> Threshold Alerts</h3>
-          <p style="color:#94a3b8;font-size:.7rem;margin-bottom:12px;">Board temp &gt;60°C | CPU temp &gt;75°C |
+          <p style="color:#94a3b8;font-size:.7rem;margin-bottom:12px;">Board temp &gt;60Â°C | CPU temp &gt;75Â°C |
             CPU load &gt;80%</p>
           <div id="alert-list" style="display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto;">
           </div>
@@ -696,9 +694,9 @@
       </div>
     </section>
 
-    <!-- ═══════════════════════════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <!-- TAB: PING MONITOR                               -->
-    <!-- ═══════════════════════════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <section id="section-ping" class="tab-section">
 
       <!-- Status Card -->
@@ -774,9 +772,9 @@
 
     </section>
 
-    <!-- ══════════════════════════════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <!-- TAB: SNMP DEVICES                                  -->
-    <!-- ══════════════════════════════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <section id="section-snmp" class="tab-section">
 
       <!-- Interface Stats: pre-rendered skeletons prevent layout jump -->
@@ -793,7 +791,7 @@
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
           <div>
             <h2 style="font-size:.85rem;font-weight:600;color:#e2e8f0;margin-bottom:2px;">Interface List</h2>
-            <p style="font-size:.7rem;color:var(--muted);">Semua interface dari perangkat SNMP · termasuk VLAN/vlanif</p>
+            <p style="font-size:.7rem;color:var(--muted);">Semua interface dari perangkat SNMP Â· termasuk VLAN/vlanif</p>
           </div>
           <div style="display:flex;align-items:center;gap:8px;">
             <select id="snmp-device-select" onchange="loadSnmpInterfaces()"
@@ -827,13 +825,13 @@
 
     <div
       style="margin-top:20px;display:flex;justify-content:space-between;font-size:.7rem;color:var(--muted);padding-bottom:12px;">
-      <span>© 2026 <span style="color:#3b82f6;font-weight:600;">2Arah Tech</span> — MikroTik Dashboard v3</span>
+      <span>© 2026 <span style="color:#3b82f6;font-weight:600;">Panha Network</span> — MikroTik Dashboard</span>
       <span>RouterOS v7 REST API</span>
     </div>
 
   </main>
 
-  <!-- ══════════════════ SNMP SECTION (rendered outside flow, still within body) ══════════════════ -->
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SNMP SECTION (rendered outside flow, still within body) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
   <!-- Note: This is placed above Toast so z-index stacking is correct -->
 
   <!-- Toast -->

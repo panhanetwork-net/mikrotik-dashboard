@@ -1,4 +1,4 @@
-/* ─── 2Arah Tech — MikroTik Dashboard ── Global Styles ─────────────────────── */
+/* â”€â”€â”€ Panha Network — MikroTik Dashboard â”€â”€ Global Styles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
@@ -20,13 +20,13 @@ html, body {
   overflow-x: hidden;
 }
 
-/* ─── Scrollbar ─── */
+/* â”€â”€â”€ Scrollbar â”€â”€â”€ */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--surface); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
-/* ─── Login Page ─── */
+/* â”€â”€â”€ Login Page â”€â”€â”€ */
 #login-screen {
   position: fixed; inset: 0; z-index: 100;
   background: radial-gradient(ellipse at 50% 0%, rgba(59, 130, 246, 0.12) 0%, var(--surface) 70%);
@@ -42,7 +42,7 @@ html, body {
   box-shadow: 0 0 60px rgba(59, 130, 246, 0.08);
 }
 
-/* ─── Card styles ─── */
+/* â”€â”€â”€ Card styles â”€â”€â”€ */
 .dash-card {
   background: var(--card);
   border: 1px solid var(--border);
@@ -70,7 +70,7 @@ html, body {
 
 .dash-card:hover::before { opacity: 1; }
 
-/* ─── Stat badge ─── */
+/* â”€â”€â”€ Stat badge â”€â”€â”€ */
 .stat-badge {
   display: inline-flex; align-items: center; gap: 6px;
   background: var(--accent-glow);
@@ -83,7 +83,7 @@ html, body {
   letter-spacing: .04em;
 }
 
-/* ─── Live dot ─── */
+/* â”€â”€â”€ Live dot â”€â”€â”€ */
 .live-dot {
   width: 7px; height: 7px;
   background: #22c55e;
@@ -97,7 +97,7 @@ html, body {
   50% { opacity: 0.5; transform: scale(.7); }
 }
 
-/* ─── Progress bar ─── */
+/* â”€â”€â”€ Progress bar â”€â”€â”€ */
 .progress-bar {
   height: 6px; border-radius: 99px;
   background: var(--border); overflow: hidden;
@@ -107,7 +107,7 @@ html, body {
   transition: width .6s cubic-bezier(.4, 0, .2, 1);
 }
 
-/* ─── Table ─── */
+/* â”€â”€â”€ Table â”€â”€â”€ */
 .dash-table { width: 100%; border-collapse: collapse; }
 .dash-table th {
   font-size: .7rem; font-weight: 600;
@@ -128,7 +128,7 @@ html, body {
 .dash-table tbody tr:hover { background: rgba(59, 130, 246, 0.04); }
 .dash-table tbody tr:last-child td { border-bottom: none; }
 
-/* ─── Status pill ─── */
+/* â”€â”€â”€ Status pill â”€â”€â”€ */
 .status-up {
   display: inline-flex; align-items: center; gap: 5px;
   background: rgba(34, 197, 94, 0.1);
@@ -146,7 +146,7 @@ html, body {
   font-size: .7rem; font-weight: 600;
 }
 
-/* ─── Input ─── */
+/* â”€â”€â”€ Input â”€â”€â”€ */
 .dash-input {
   width: 100%;
   background: rgba(255, 255, 255, 0.04);
@@ -165,7 +165,7 @@ html, body {
 }
 .dash-input::placeholder { color: var(--muted); }
 
-/* ─── Button ─── */
+/* â”€â”€â”€ Button â”€â”€â”€ */
 .btn-primary {
   background: var(--accent);
   color: #fff;
@@ -194,7 +194,7 @@ html, body {
 }
 .btn-secondary:hover { color: #fff; border-color: rgba(59, 130, 246, 0.5); }
 
-/* ─── Header / Topbar ─── */
+/* â”€â”€â”€ Header / Topbar â”€â”€â”€ */
 .topbar {
   background: rgba(15, 17, 23, 0.85);
   backdrop-filter: blur(16px);
@@ -203,7 +203,7 @@ html, body {
   position: sticky; top: 0; z-index: 50;
 }
 
-/* ─── Spinner ─── */
+/* â”€â”€â”€ Spinner â”€â”€â”€ */
 .spinner {
   display: inline-block;
   width: 20px; height: 20px;
@@ -214,7 +214,7 @@ html, body {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ─── Toast ─── */
+/* â”€â”€â”€ Toast â”€â”€â”€ */
 #toast {
   position: fixed; bottom: 1.5rem; right: 1.5rem;
   background: #1e2534; border: 1px solid #ef4444;
@@ -226,7 +226,7 @@ html, body {
   align-items: center;
 }
 
-/* ─── Router offline banner ─── */
+/* â”€â”€â”€ Router offline banner â”€â”€â”€ */
 #offline-banner {
   display: none;
   background: rgba(239, 68, 68, 0.12);
@@ -241,18 +241,18 @@ html, body {
 }
 @keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-/* ─── Fade-up animation ─── */
+/* â”€â”€â”€ Fade-up animation â”€â”€â”€ */
 .fade-up { opacity: 0; transform: translateY(18px); }
 
-/* ─── Monospace ─── */
+/* â”€â”€â”€ Monospace â”€â”€â”€ */
 .font-mono { font-family: 'JetBrains Mono', monospace; }
 
-/* ─── Colors ─── */
+/* â”€â”€â”€ Colors â”€â”€â”€ */
 .text-accent  { color: var(--accent); }
 .text-muted   { color: var(--muted); }
 .text-surface { color: var(--surface); }
 
-/* ─── Responsive ─── */
+/* â”€â”€â”€ Responsive â”€â”€â”€ */
 @media (max-width: 768px) {
   .login-card { margin: 1rem; }
   .dash-table { font-size: .75rem; }
@@ -262,7 +262,7 @@ html, body {
 
 canvas { display: block; }
 
-/* ─── SNMP Stat Cards ────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€ SNMP Stat Cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .snmp-stat-skeleton {
   background: linear-gradient(90deg, var(--card-bg) 25%, var(--card) 50%, var(--card-bg) 75%);
   background-size: 200% 100%;
@@ -283,13 +283,13 @@ canvas { display: block; }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ─── App Layout (Sidebar + Content) ─── */
+/* â”€â”€â”€ App Layout (Sidebar + Content) â”€â”€â”€ */
 .app-layout {
   display: flex;
   min-height: 100vh;
 }
 
-/* ─── Sidebar ─── */
+/* â”€â”€â”€ Sidebar â”€â”€â”€ */
 .sidebar {
   width: 220px;
   flex-shrink: 0;
@@ -311,7 +311,7 @@ canvas { display: block; }
   gap: 10px;
 }
 
-.sidebar-logo img { height: 28px; width: auto; filter: brightness(0) invert(1); }
+.sidebar-logo img { height: 28px; width: auto;  }
 
 .sidebar-nav {
   flex: 1;
@@ -353,19 +353,19 @@ canvas { display: block; }
   display: flex; flex-direction: column; gap: 4px;
 }
 
-/* ─── Content area (no sidebar in SPA mode) ─── */
+/* â”€â”€â”€ Content area (no sidebar in SPA mode) â”€â”€â”€ */
 .content-wrap {
   flex: 1;
   min-width: 0;
 }
 
-/* ─── Topbar ─── */
+/* â”€â”€â”€ Topbar â”€â”€â”€ */
 .topbar {
   padding-left: 0;
   padding-right: 0;
 }
 
-/* ─── Status warning pill ─── */
+/* â”€â”€â”€ Status warning pill â”€â”€â”€ */
 .status-warn {
   display: inline-flex; align-items: center; gap: 5px;
   background: rgba(245,158,11,.1);
@@ -375,11 +375,11 @@ canvas { display: block; }
   font-size: .7rem; font-weight: 600;
 }
 
-/* ─── Temp / Voltage card icon tint ─── */
+/* â”€â”€â”€ Temp / Voltage card icon tint â”€â”€â”€ */
 .icon-temp { color: #f97316; }
 .icon-volt { color: #eab308; }
 
-/* ─── Search input ─── */
+/* â”€â”€â”€ Search input â”€â”€â”€ */
 .search-input {
   background: rgba(255,255,255,.04);
   border: 1px solid var(--border);
@@ -401,60 +401,153 @@ canvas { display: block; }
   .login-card { margin: 1rem; }
   .dash-table { font-size: .75rem; }
   .dash-table th, .dash-table td { padding: 8px 10px; }
+  
+  /* â”€â”€â”€ Mobile Grid Breakpoints â”€â”€â”€ */
+  div[style*="grid-template-columns:1fr 1fr"],
+  div[style*="grid-template-columns: repeat(2,1fr)"],
+  div[style*="grid-template-columns:repeat(2,1fr)"],
+  div[style*="grid-template-columns: repeat(4,1fr)"],
+  div[style*="grid-template-columns:repeat(4,1fr)"],
+  div[style*="grid-template-columns:repeat(auto-fit,minmax(48%,1fr))"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* â”€â”€â”€ Header / Topbar adjustments â”€â”€â”€ */
+  .topbar {
+    flex-wrap: wrap !important;
+    padding: 10px 15px !important;
+    gap: 10px !important;
+  }
+
+  /* Hamburger Menu Button visibility */
+  #mobile-menu-btn {
+    display: flex !important;
+  }
+  
+  /* Make the tab-nav a dropdown inside the topbar */
+  .tab-nav {
+    display: none !important; /* hidden by default on mobile */
+    flex-direction: column !important;
+    width: 100% !important;
+    order: 3 !important;
+    padding-top: 10px !important;
+    border: none !important;
+    background: transparent !important;
+    gap: 4px !important;
+    margin-top: 5px !important;
+  }
+  .tab-nav.show-mobile {
+    display: flex !important;
+  }
+  
+  .tab-btn {
+    width: 100% !important;
+    justify-content: flex-start !important;
+    padding: 10px 14px !important;
+    font-size: 0.85rem !important;
+    background: rgba(255,255,255,0.03) !important;
+  }
+  .tab-btn.active {
+    background: var(--accent) !important;
+  }
+  
+  /* Hide the text "Diperbarui" and "Live" on mobile to save space */
+  .topbar > div:nth-child(3) > div:nth-child(1),
+  .topbar > div:nth-child(3) > div:nth-child(2) {
+    display: none !important;
+  }
+  
+  /* Action buttons (Settings, Alert, Keluar, Hamburger) */
+  .topbar > div:nth-child(3) > div:nth-child(4) button {
+    padding: 0 !important;
+    font-size: 0 !important; /* hide text */
+    justify-content: center !important;
+    align-items: center !important;
+    width: 32px !important;
+    height: 32px !important;
+    gap: 0 !important;
+  }
+  
+  .topbar > div:nth-child(3) > div:nth-child(4) button svg {
+    margin: 0 !important;
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  /* â”€â”€â”€ Main padding adjustments â”€â”€â”€ */
+  main {
+    padding: 15px 12px !important;
+  }
+
+  /* â”€â”€â”€ Font Size adjustments for Mobile â”€â”€â”€ */
+  #rx-current, #tx-current {
+    font-size: 2.2rem !important;
+  }
+
+  span[id^='val-cg-'][id$='-rx'], span[id^='val-cg-'][id$='-tx'],
+  #val-dns-total, #val-dns-blocked, #pppoe-total, #pppoe-online, 
+  #conn-total, #conn-established, #conn-src-ips, #conn-dst-ports, 
+  #ping-stat-status, #ping-stat-consecutive, #ping-stat-total-rto, #ping-stat-total-ok {
+    font-size: 1.8rem !important;
+  }
+  
+  /* Allow tables to scroll horizontally better */
+  .dash-card {
+    padding: 1rem !important;
+  }
+  .search-input {
+    width: 140px !important;
+  }
 }
 
-/* ─── NOC ZOOM ENHANCEMENTS (67% Legibility) ─── */
+/* â”€â”€â”€ NOC ZOOM ENHANCEMENTS (67% Legibility) â”€â”€â”€ */
 
 /* Increase Main Traffic RX/TX sizes */
 #rx-current, #tx-current {
-  font-size: 3.8rem !important;
-  font-weight: 800 !important;
-  color: #ffffff !important;
-  line-height: 1 !important;
+  font-size: 3.8rem;
+  font-weight: 800;
+  line-height: 1;
 }
 
 /* Custom Graphs values (IN/OUT) */
 span[id^='val-cg-'][id$='-rx'], span[id^='val-cg-'][id$='-tx'] {
-  font-size: 2.2rem !important;
-  font-weight: 800 !important;
-  color: #ffffff !important;
-  line-height: 1 !important;
+  font-size: 2.2rem;
+  font-weight: 800;
+  line-height: 1;
 }
 
 /* DNS Values */
 #val-dns-total, #val-dns-blocked {
-  font-size: 2.2rem !important;
-  font-weight: 800 !important;
-  color: #ffffff !important;
-  line-height: 1 !important;
+  font-size: 2.2rem;
+  font-weight: 800;
+  line-height: 1;
 }
 
 /* Other metrics like PPPoE total, Ping RTO, Connections */
 #pppoe-total, #pppoe-online, #conn-total, #conn-established, #conn-src-ips, #conn-dst-ports, #ping-stat-status, #ping-stat-consecutive, #ping-stat-total-rto, #ping-stat-total-ok {
-  font-size: 2.6rem !important;
-  font-weight: 800 !important;
-  color: #ffffff !important;
+  font-size: 2.6rem;
+  font-weight: 800;
 }
 
 /* Enhancing Titles with Glow and Spacing */
 p[style*='uppercase'], h3[style*='uppercase'] {
-  letter-spacing: 1.5px !important;
-  font-weight: 800 !important;
-  color: #00e5ff !important;
-  text-shadow: 0 0 5px rgba(0, 229, 255, 0.4) !important;
+  letter-spacing: 1.5px;
+  font-weight: 800;
+  color: #00e5ff;
+  text-shadow: 0 0 5px rgba(0, 229, 255, 0.4);
 }
 
 /* The sub text units */
 #rx-unit, #tx-unit {
-  font-size: 1.2rem !important;
-  font-weight: 600 !important;
-  color: #94a3b8 !important;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #94a3b8;
 }
 
 /* All text inside cards defaults to light-gray — prevents browser black default */
 .dash-card p {
-   font-size: 0.8rem !important;
-   color: #cbd5e1 !important;
+   font-size: 0.8rem;
+   color: #cbd5e1;
 }
 .dash-card span,
 .dash-card div,
@@ -462,12 +555,12 @@ p[style*='uppercase'], h3[style*='uppercase'] {
   color: #e2e8f0;
 }
 
-/* ── Global white default — prevents any element inheriting browser black ── */
+/* â”€â”€ Global white default — prevents any element inheriting browser black â”€â”€ */
 body {
   color: #f1f5f9;
 }
 
-/* ── Riwayat & Alert section: force all text white, inline color styles override naturally ── */
+/* â”€â”€ Riwayat & Alert section: force all text white, inline color styles override naturally â”€â”€ */
 #section-history {
   color: #f1f5f9;
 }
@@ -478,3 +571,5 @@ body {
 #section-history .dash-card label:not([style*="color"]) {
   color: #f1f5f9 !important;
 }
+
+
