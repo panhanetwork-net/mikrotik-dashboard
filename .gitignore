@@ -6,4 +6,9 @@ node_modules/
 sessions/
 logo_src.png
 logo_b64.txt
-.DS_Store\ntest_*.js\ntestSwitch.js\ndata.json
+.DS_Store
+test_*.js
+testSwitch.js
+data.json
+*.log
+npm-debug.log*
