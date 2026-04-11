@@ -41,7 +41,7 @@ async function handleLogin(e) {
     const data = await res.json();
 
     if (!res.ok || !data.ok) {
-      throw new Error(data.error || 'Login gagal. Periksa kembali kredensial Anda.');
+      throw new Error((data && data.error) || 'Login gagal. Periksa kembali kredensial Anda.');
     }
 
     window.location.href = '/dashboard';

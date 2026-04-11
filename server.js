@@ -1,4 +1,4 @@
-﻿'use strict';
+'use strict';
 // Manual .env loader — no dotenv package required
 const fs = require('fs'), path = require('path');
 try {
@@ -37,8 +37,10 @@ const { router: pingRouter, startPingMonitor } = require('./routes/ping');
 const snmpRouter = require('./routes/snmp-poller');
 const settingsRouter = require('./routes/settings');
 const requireAuth = require('./middleware/requireAuth');
+const sseRouter = require('./routes/sse');
 
 const app = express();
+app.set('trust proxy', 1); // Trust first proxy for correct Rate Limiting IP
 const PORT = process.env.PORT || 3000;
 
 // â”€â”€â”€ Middleware â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -90,6 +92,7 @@ app.use('/api/history', requireAuth, historyRouter);
 app.use('/api/ping', requireAuth, pingRouter);
 app.use('/api/snmp', requireAuth, snmpRouter);
 app.use('/api/settings', requireAuth, settingsRouter);
+app.use('/api', requireAuth, sseRouter);
 
 // â”€â”€â”€ Technitium DNS Proxy â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.get('/api/technitium/chart', requireAuth, async (req, res) => {

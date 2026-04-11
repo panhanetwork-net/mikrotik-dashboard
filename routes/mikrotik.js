@@ -361,4 +361,4 @@ async function mikrotikFetch(_routerIp, path) {
   throw new Error('mikrotikFetch: unsupported path ' + path);
 }
 
-module.exports = { router, mikrotikFetch };
+module.exports = { router, mikrotikFetch, api, getDevicesList };

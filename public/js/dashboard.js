@@ -140,6 +140,7 @@ async function fetchPublicConfig() {
 
 /* ─── Tab Switching ──────────────────────────────────────────────────────── */
 function switchTab(tab) {
+  if (typeof NProgress !== 'undefined') { NProgress.start(); setTimeout(() => NProgress.done(), 300); }
   activeTab = tab;
   document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('visible'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -446,10 +447,9 @@ function updateTrafficUI(data) {
   }
 }
 
-// ─── Fetch: Technitium DNS ──────────────────────────────────────────────────
-async function fetchTechnitium() {
+// ─── Data: Technitium DNS ──────────────────────────────────────────────────
+function updateTechnitiumUI(d) {
   try {
-    const d = await fetch('/api/technitium/chart').then(r => r.json());
     if (d.error) throw new Error(d.error);
     
     if (d.response && d.response.stats) {
@@ -498,10 +498,9 @@ function updateHealthUI(data) {
 
 }
 
-/* ─── Fetch: Resources ───────────────────────────────────────────────────── */
-async function fetchResources() {
-  const r = await fetch('/api/mikrotik/resources').then(res => res.json());
-  if (r.error) throw new Error(r.error);
+/* ─── Data: Resources ───────────────────────────────────────────────────── */
+function updateResourcesUI(r) {
+  if (r.error || Object.keys(r).length === 0) return;
 
   const container = document.getElementById('system-status-container');
   if (!container) return;
@@ -615,13 +614,8 @@ async function fetchResources() {
   }
 }
 
-/* ─── Fetch: Health ──────────────────────────────────────────────────────── */
-async function fetchHealth() {
-  try {
-    const data = await fetch('/api/mikrotik/health').then(r => r.json());
-    if (!data.error) updateHealthUI(data);
-  } catch (_) {}
-}
+// Removed in favor of updateHealthUI already existing
+// see updateHealthUI function instead
 
 /* ─── Fetch: Traffic ─────────────────────────────────────────────────────── */
 async function fetchTraffic() {
@@ -706,10 +700,8 @@ async function fetchInterfaces() {
   prevTimestamp = now;
 }
 
-/* ─── Fetch: PPPoE Sessions ──────────────────────────────────────── */
-async function fetchPppoe() {
-  const data = await fetch('/api/mikrotik/pppoe-active').then(r => r.json());
-  if (data.error) throw new Error(data.error);
+/* ─── Data: PPPoE Sessions ──────────────────────────────────────── */
+function updatePppoeUI(data) {
   const total = data.total || 0;
   allPppoe = Array.isArray(data.sessions) ? data.sessions : [];
   document.getElementById('pppoe-total').textContent = total.toLocaleString('id-ID');
@@ -730,13 +722,20 @@ function renderPppoeTable(sessions) {
     const user   = s.name || '—';
     const ip     = s.address || '—';
     const caller = s['caller-id'] || s['mac-address'] || '—';
+    let vSuf = '';
+    if (caller.includes(':')) {
+       const pre = caller.substring(0,8).toUpperCase();
+       if (window.macVendors && window.macVendors[pre] && window.macVendors[pre] !== 'Unknown') {
+           vSuf = ` <span style="font-size:0.6rem;color:#8b5cf6;">[${window.macVendors[pre]}]</span>`;
+       }
+    }
     const svc    = s.service || '—';
     const uptime = s.uptime || '—';
     const enc    = s.encoding || '—';
     return `<tr>
       <td style="color:#e2e8f0;font-weight:500;">${user}</td>
       <td style="font-family:monospace;color:#3b82f6;font-size:.78rem;">${ip}</td>
-      <td style="font-family:monospace;color:#94a3b8;font-size:.75rem;">${caller}</td>
+      <td style="font-family:monospace;color:#94a3b8;font-size:.75rem;">${caller}${vSuf}</td>
       <td style="font-family:monospace;color:var(--muted);font-size:.75rem;">${svc}</td>
       <td style="font-family:monospace;color:#22c55e;font-size:.75rem;">${uptime}</td>
       <td style="font-family:monospace;color:var(--muted);font-size:.72rem;">${enc}</td>
@@ -756,10 +755,8 @@ function filterPppoe() {
 
 
 
-/* ─── Fetch: Connections ─────────────────────────────────────────────────── */
-async function fetchConnections() {
-  const data = await fetch('/api/mikrotik/connections').then(r => r.json());
-  if (data.error) throw new Error(data.error);
+/* ─── Data: Connections ─────────────────────────────────────────────────── */
+function updateConnectionsUI(data) {
   const total = data.total || 0;
   allConns = Array.isArray(data.connections) ? data.connections : [];
 
@@ -886,28 +883,43 @@ async function fetchMikrotikStats() {
   ]);
 }
 
-async function fetchAll() {
-  try {
-    await Promise.all([
-      fetchTechnitium().catch(e => console.warn('[fetchTechnitium]', e.message)),
-      fetchResources().catch(e => console.warn('[fetchResources]', e.message)),
-      fetchMikrotikStats().catch(e => console.warn('[fetchMikrotikStats]', e.message)),
-      fetchHealth().catch(e => console.warn('[fetchHealth]', e.message)),
-      fetchPppoe().catch(e => console.warn('[fetchPppoe]', e.message)),
-      fetchConnections().catch(e => console.warn('[fetchConnections]', e.message)),
-      fetchFirewallAndLogs().catch(e => console.warn('[fetchFirewallAndLogs]', e.message)),
-      fetchHistory().catch(e => console.warn('[fetchHistory]', e.message)),
-    ]);
-    document.getElementById('last-update').textContent =
-      new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  } catch (err) {
-    console.error('[fetchAll]', err.message);
-  }
-}
-
+let evtSource = null;
 function startPolling() {
-  fetchAll();
-  pollTimer = setInterval(fetchAll, pollInterval);
+  // Local polling for selected interface specific stats
+  fetchMikrotikStats();
+  fetchHistory().catch(()=>{});
+  pollTimer = setInterval(() => { fetchMikrotikStats(); fetchHistory().catch(()=>{}); }, pollInterval);
+
+  // SSE for global system metrics
+  if (evtSource) evtSource.close();
+  evtSource = new EventSource('/api/stream');
+  
+  evtSource.onmessage = function(e) {
+    try {
+      const data = JSON.parse(e.data);
+      
+      // Update functions with injected data (requires modifying those functions to accept data args, or just inline update here)
+      if (data.resources && !data.resources.error) updateResourcesUI(data.resources);
+      if (data.health && !data.health.error) updateHealthUI(data.health);
+      if (data.pppoe && !data.pppoe.error && data.pppoe.sessions) updatePppoeUI(data.pppoe);
+      if (data.connections && !data.connections.error) updateConnectionsUI(data.connections);
+      if (data.firewall && !data.firewall.error) updateFirewallUI(data.firewall, data.logs);
+      if (data.technitium && !data.technitium.error && data.technitium.response) updateTechnitiumUI(data.technitium);
+      if (data.ping && !data.ping.error) updatePingUI(data.ping);
+      
+      // Expose macVendors to window for formatters
+      window.macVendors = data.macVendors || {};
+
+      document.getElementById('last-update').textContent =
+        new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    } catch(err) {
+      console.error('[SSE]', err);
+    }
+  };
+  
+  evtSource.onerror = function(e) {
+    console.error('[SSE] Error', e);
+  };
 }
 
 function changeInterval() {
@@ -1065,22 +1077,17 @@ async function fetchQueues() {
   }
 }
 
-/* ─── Fetch: Firewall Stats + System Log ────────────────────────────────────── */
+/* ─── Data: Firewall Stats + System Log ────────────────────────────────────── */
 const BRUTE_KEYWORDS = ['login failure', 'login failed', 'brute', 'port scan', 'syn flood', 'blocked', 'dropped', 'invalid'];
 let allLogs = [];
 
-async function fetchFirewallAndLogs() {
+function updateFirewallUI(fwData, logs) {
   // Firewall
-  try {
-    const fwData = await fetch('/api/mikrotik/firewall-stats').then(r => r.json());
-    if (!fwData.error) renderFirewallTable(fwData);
-  } catch (_) {}
+  if (fwData && !fwData.error) renderFirewallTable(fwData);
 
   // Logs
-  try {
-    const logs = await fetch('/api/mikrotik/logs').then(r => r.json());
-    if (!Array.isArray(logs)) return;
-    allLogs = logs;
+  if (!Array.isArray(logs)) return;
+  allLogs = logs;
 
     // Brute force / scan detection
     const bruteEntries = logs.filter(l => BRUTE_KEYWORDS.some(k => (l.message||l.topics||'').toLowerCase().includes(k)));
@@ -1118,7 +1125,6 @@ async function fetchFirewallAndLogs() {
       </div>`).join('');
 
     renderLogViewer(logs);
-  } catch (_) {}
 }
 
 function renderFirewallTable(fwData) {
@@ -1220,10 +1226,9 @@ function filterDns() {
   renderDnsTable(q ? allDns.filter(e => JSON.stringify(e).toLowerCase().includes(q)) : allDns);
 }
 
-/* ─── Fetch: Ping Status ────────────────────────────────────────────── */
-async function fetchPingStatus() {
+/* ─── Data: Ping Status ────────────────────────────────────────────── */
+function updatePingUI(d) {
   try {
-    const d = await fetch('/api/ping/status').then(r => r.json());
     const iconEl  = document.getElementById('ping-status-icon');
     const textEl  = document.getElementById('ping-status-text');
     const detailEl= document.getElementById('ping-status-detail');
