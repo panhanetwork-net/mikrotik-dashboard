@@ -43,9 +43,6 @@ Dashboard monitoring dan manajemen jaringan berbasis web yang terintegrasi secar
    ```
 7. Buka browser dan akses dashboard melalui alamat `http://<IP_SERVER>:<PORT>` (Port default adalah 3000). Masukkan konfigurasi Anda via UI *Settings*.
 
-### Troubleshooting
-*Apakah Anda memiliki panduan langkah-langkah spesifik (seperti cara menyalakan router, mengatasi izin API, atau error PM2) yang ingin ditambahkan di sini? Silakan beritahu saya agar struktur perbaikannya dapat ditambahkan.*
-
 <p align="right">
   <b>Author:</b> misuminitt
 </p>
