@@ -1,49 +1,51 @@
-﻿# Panha Network MikroTik Dashboard
+<h1 align="center">MikroTik & NOC Dashboard</h1>
 
-Dashboard monitoring real-time berbasis Node.js dan RouterOS REST API untuk perangkat MikroTik. Aplikasi ini menggantikan PRTG dan memberikan tampilan UI yang modern, ringan, dan informatif untuk Network Operations Center (NOC).
+<p align="center">
+  <img src="https://img.shields.io/badge/Node.js-v18.x+-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js">
+  <img src="https://img.shields.io/badge/Express.js-Backend-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express">
+  <img src="https://img.shields.io/badge/MikroTik-RouterOS_API-1E2B3E?style=for-the-badge" alt="MikroTik">
+  <img src="https://img.shields.io/badge/SNMP-v2c-0078D4?style=for-the-badge" alt="SNMP">
+  <img src="https://img.shields.io/badge/PM2-Deployment-2B037A?style=for-the-badge&logo=pm2&logoColor=white" alt="PM2">
+</p>
 
-## Fitur Utama
-- **Real-time Monitoring:** Traffic global, traffic per interface (SFP, LACP, dll.), uptime, CPU beban, dan memori RAM.
-- **Dynamic Interface Target:** Polling ke interface spesifik pada Switch CRS-326 (seperti arah BAROS) dapat diset dinamis via `.env` atau komentar di perangkat MikroTik.
-- **PPPoE & Connection Tracker:** Melacak jumlah active PPPoE, Hotspot, dan daftar koneksi jaringan aktif yang sedang berlangsung.
-- **Firewall & DNS:** Memantau stat firewall dan log dari router, serta tabel Local DNS cache.
-- **Telegram Alerting:** Jika VPN putus atau Router offline berturut-turut, sistem mengirim alert ke tim NOC via Telegram dengan delay & toleransi retry.
+Dashboard monitoring dan manajemen jaringan berbasis web yang terintegrasi secara *real-time* dengan MikroTik RouterOS melalui REST API dan memonitor berbagai perangkat eksternal (Switch, OLT, Router) menggunakan protokol SNMP. Menyediakan antarmuka visual dinamis untuk memantau koneksi aktif, bandwidth PPPoE, laporan *firewall log*, dan status perangkat secara instan dengan dukungan alert Telegram.
 
-## Persyaratan
-- Node.js v18 atau v20.
-- MikroTik RouterOS v7.1++ (wajib support REST API).
-- Membuka REST API MikroTik: Buka `IP > Services > www-ssl` atau `api-ssl` beserta sertifikatnya (REST API menggunakan web protokol/API).
+## Requirements
+- **Node.js** (v18.x atau versi terbaru yang stabil disarankan)
+- **NPM** (Node Package Manager)
+- Akses ke Router **MikroTik** (RouterOS) dengan fitur API yang telah diaktifkan (`IP > Services > api`)
+- **PM2** (Opsional, sangat disarankan untuk menjalankan aplikasi di server *production*)
+- Perangkat jaringan yang mendukung SNMP v2c (jika ingin menggunakan fitur SNMP)
 
-## Instalasi
+## Installation
 
-1. Clone repository ini.
-2. Pasang dependencies:
+1. Buka terminal dan clone/unduh repositori ini ke dalam server atau komputer Anda.
+2. Masuk ke dalam direktori project:
+   ```bash
+   cd mikrotik-dashboard
+   ```
+3. Install semua *dependencies* (paket yang dibutuhkan) menggunakan NPM:
    ```bash
    npm install
    ```
-3. Copy template file environment dan isi konfigurasinya:
+4. Ubah nama atau salin file contoh *environment* Anda menjadi `.env`:
    ```bash
    cp .env.example .env
    ```
-4. Jalankan aplikasi:
+   *(Jika file .env belum ada, jalankan aplikasi satu kali atau edit dari halaman Settings)*
+5. Jalankan aplikasi di environment *development*:
    ```bash
-   npm start
+   node server.js
    ```
+6. **Untuk Production (Menggunakan PM2):**
+   ```bash
+   pm2 start server.js --name "mikrotik-dashboard" --update-env
+   ```
+7. Buka browser dan akses dashboard melalui alamat `http://<IP_SERVER>:<PORT>` (Port default adalah 3000). Masukkan konfigurasi Anda via UI *Settings*.
 
-## Struktur Konfigurasi (`.env`)
+### Troubleshooting
+*Apakah Anda memiliki panduan langkah-langkah spesifik (seperti cara menyalakan router, mengatasi izin API, atau error PM2) yang ingin ditambahkan di sini? Silakan beritahu saya agar struktur perbaikannya dapat ditambahkan.*
 
-Seluruh hardcode kredensial, IP dari berbagai router, dan port API semuanya telah diekstrak ke dalam `.env` untuk keamanan. Aplikasi membaca `MIKROTIK_HOST`, `BRS_HOST`, `SW_HOST`, `SESSION_SECRET`, dll dari environment, sehingga kredensial login **tidak** bisa di-sniff pada sisi frontend browser.
-
-| Variabel | Deskripsi |
-|---|---|
-| `MIKROTIK_USER` / `_PASS` | Kredensial untuk RouterOS API |
-| `MIKROTIK_HOST` / `_API_PORT` | Host & Port API untuk Router Utama |
-| `BRS_HOST` / `SW_HOST` | Host IP tujuan untuk router/switch sekunder |
-| `PING_TARGET` | Konfigurasi target IP untuk router ping monitor |
-| `TELEGRAM_BOT_TOKEN` | Token Telegram bot untuk Alert (opsional) |
-| `SESSION_SECRET` | Kunci sesi login Express.js |
-
-## Lisensi
-Internal Use Only - Panha Network NOC.
-
-
+<p align="right">
+  <b>Author:</b> misuminitt
+</p>

@@ -54,6 +54,7 @@ router.post('/', (req, res) => {
   if (
     (payload.PORT && payload.PORT !== currentEnv.PORT) ||
     (payload.TELEGRAM_BOT_TOKEN && payload.TELEGRAM_BOT_TOKEN !== '********' && payload.TELEGRAM_BOT_TOKEN !== currentEnv.TELEGRAM_BOT_TOKEN) ||
+    (payload.TELEGRAM_CHAT_ID && payload.TELEGRAM_CHAT_ID !== currentEnv.TELEGRAM_CHAT_ID) ||
     (payload.PING_TARGET && payload.PING_TARGET !== currentEnv.PING_TARGET)
   ) {
     requiresRestart = true;

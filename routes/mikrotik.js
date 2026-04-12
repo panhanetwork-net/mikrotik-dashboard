@@ -65,18 +65,26 @@ router.get('/status', async (req, res) => {
 
 /* ─── GET /api/mikrotik/resources ──────────────────────────────────────────── */
 function getDevicesList() {
-  const devices = [{ key: 'MAIN', label: '.31 Utama (CCR)', host: (process.env.MIKROTIK_HOST||'').split(':')[0], port: parseInt(process.env.MIKROTIK_API_PORT||'56988'), user: process.env.MIKROTIK_USER||'', pass: process.env.MIKROTIK_PASS||'', webPort: 80 }];
+  const devices = [{ key: 'MAIN', label: '.31 Utama (CCR)', host: (process.env.MIKROTIK_HOST||'').split(':')[0], port: parseInt(process.env.MIKROTIK_API_PORT||'56988'), user: (process.env.MIKROTIK_USER||'').trim(), pass: (process.env.MIKROTIK_PASS||'').trim(), webPort: 80 }];
   const leg = ['BRS', 'R50', 'R155'];
   leg.forEach(k => {
     if (process.env[`${k}_HOST`]) {
-      devices.push({ key: k, label: process.env[`MK_DEVICE_${k}_LABEL`] || k, host: process.env[`${k}_HOST`].split(':')[0], port: parseInt(process.env[`${k}_API_PORT`]||'8728'), user: process.env[`${k}_USER`]||'', pass: process.env[`${k}_PASS`]||'', webPort: parseInt(process.env[`${k}_WEB_PORT`]||'80') });
+      devices.push({ key: k, label: process.env[`MK_DEVICE_${k}_LABEL`] || k, host: process.env[`${k}_HOST`].split(':')[0], port: parseInt(process.env[`${k}_API_PORT`]||'8728'), user: (process.env[`${k}_USER`]||'').trim(), pass: (process.env[`${k}_PASS`]||'').trim(), webPort: parseInt(process.env[`${k}_WEB_PORT`]||'80') });
     }
   });
   for (const key of Object.keys(process.env)) {
     const match = key.match(/^MK_DEVICE_([A-Z0-9_]+)_HOST$/);
     if (match) {
       const k = match[1];
-      devices.push({ key: k, label: process.env[`MK_DEVICE_${k}_LABEL`] || k, host: process.env[key].split(':')[0], port: parseInt(process.env[`MK_DEVICE_${k}_API_PORT`]||'8728'), user: process.env[`MK_DEVICE_${k}_USER`]||'', pass: process.env[`MK_DEVICE_${k}_PASS`]||'', webPort: parseInt(process.env[`MK_DEVICE_${k}_WEB_PORT`]||'80') });
+      devices.push({
+        key: k,
+        label: process.env[`MK_DEVICE_${k}_LABEL`] || k,
+        host: process.env[key].split(':')[0],
+        port: parseInt(process.env[`MK_DEVICE_${k}_API_PORT`] || process.env[`${k}_API_PORT`] || '8728'),
+        user: (process.env[`MK_DEVICE_${k}_USER`] || process.env[`${k}_USER`] || process.env.MIKROTIK_USER || '').trim(),
+        pass: (process.env[`MK_DEVICE_${k}_PASS`] || process.env[`${k}_PASS`] || process.env.MIKROTIK_PASS || '').trim(),
+        webPort: parseInt(process.env[`MK_DEVICE_${k}_WEB_PORT`] || process.env[`${k}_WWW_PORT`] || process.env[`${k}_WEB_PORT`] || '80')
+      });
     }
   }
   return devices;

@@ -1,4 +1,4 @@
-﻿'use strict';
+'use strict';
 
 /**
  * History module — in-memory ring buffers for:
@@ -10,10 +10,58 @@
 const MAX_TRAFFIC_POINTS = 1440; // 24h at 1 poll/minute
 const MAX_EVENTS         = 200;
 
-// â”€â”€â”€ Ring buffers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-const trafficHistory  = [];   // { ts, total: {rx,tx}, sfp: {rx,tx}, lacp: {rx,tx}, arah: {rx,tx} }
-const uptimeEvents    = [];   // { ts, event:'start'|'reboot', uptimeStr }
-const thresholdAlerts = [];   // { ts, type, value, threshold, routerIp }
+// ————————————————————————————————————————————————————————————————————————————————
+const fs = require('fs');
+const path = require('path');
+const histFile = path.join(__dirname, '../data/history.json');
+
+let trafficHistory  = [];
+let uptimeEvents    = [];
+let thresholdAlerts = [];
+
+// Load from disk if exists
+try {
+  if (fs.existsSync(histFile)) {
+    const d = JSON.parse(fs.readFileSync(histFile, 'utf8'));
+    if (Array.isArray(d.trafficHistory)) trafficHistory = d.trafficHistory;
+    if (Array.isArray(d.uptimeEvents)) uptimeEvents = d.uptimeEvents;
+    if (Array.isArray(d.thresholdAlerts)) thresholdAlerts = d.thresholdAlerts;
+  } else {
+    if (!fs.existsSync(path.dirname(histFile))) fs.mkdirSync(path.dirname(histFile), { recursive: true });
+  }
+} catch (e) {
+  console.error('[History] Gagal memuat file history.json:', e);
+}
+
+// Throttle saves to disk to prevent disk thrashing
+let saveTimer = null;
+function writeHistoryNow() {
+  try {
+    fs.writeFileSync(histFile, JSON.stringify({ trafficHistory, uptimeEvents, thresholdAlerts }));
+  } catch (e) {
+    console.error('[History] Gagal save to history.json:', e);
+  }
+}
+
+function saveHistory() {
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    saveTimer = null;
+    writeHistoryNow();
+  }, 10000); // save at most once every 10s
+}
+
+function flushHistoryOnShutdown() {
+  if (saveTimer) {
+    clearTimeout(saveTimer);
+    saveTimer = null;
+  }
+  writeHistoryNow();
+}
+
+process.on('SIGINT', flushHistoryOnShutdown);
+process.on('SIGTERM', flushHistoryOnShutdown);
+process.on('beforeExit', flushHistoryOnShutdown);
 
 // Track previous uptime seconds to detect reboots
 let prevUptimeSeconds = null;
@@ -46,6 +94,7 @@ function recordTraffic(totalRx, totalTx, customGraphs) {
     total: { rx: totalRx, tx: totalTx },
     custom: customGraphs || [] // Array of { id, rx, tx }
   }, MAX_TRAFFIC_POINTS);
+  saveHistory();
 }
 
 // â”€â”€â”€ Record uptime + detect reboots â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -69,6 +118,7 @@ function recordUptime(uptimeStr) {
     }, MAX_EVENTS);
   }
   prevUptimeSeconds = currentSec;
+  saveHistory();
 }
 
 // â”€â”€â”€ Threshold check & alert â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -120,6 +170,7 @@ async function checkThresholds({ cpuLoad, cpuTemp, boardTemp, routerIp, sendTele
       unit:      check.unit,
       routerIp,
     }, MAX_EVENTS);
+    saveHistory();
 
     alertCooldown[check.key] = now;
 

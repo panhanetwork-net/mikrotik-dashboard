@@ -4,6 +4,7 @@ const fetch = require('node-fetch');
 const fs = require('fs');
 const path = require('path');
 const { api, getDevicesList } = require('./mikrotik');
+const { getPingStatus } = require('./ping');
 const { runCommand } = require('./routeros-api');
 
 const router = express.Router();
@@ -18,7 +19,7 @@ try {
   if (fs.existsSync(macCachePath)) {
     macCache = JSON.parse(fs.readFileSync(macCachePath, 'utf8'));
   } else {
-    if (!fs.existsSync(path.dirname(macCachePath))) fs.mkdirSync(path.dirname(macCachePath));
+    if (!fs.existsSync(path.dirname(macCachePath))) fs.mkdirSync(path.dirname(macCachePath), { recursive: true });
     fs.writeFileSync(macCachePath, '{}');
   }
 } catch (e) {
@@ -64,19 +65,36 @@ async function fetchTechnitium() {
 async function fetchResources() {
   const devices = getDevicesList();
   const fetchRes = async (d) => {
-    if (d.key === 'MAIN') return api('/system/resource/print').catch(e => [{ _error: "Gagal terhubung ke Router MAIN" }]);
+    if (d.key === 'MAIN') {
+      return api('/system/resource/print').catch(e => {
+        const mainErr = e && e.message ? e.message : String(e);
+        return [{ _error: `API Error: ${mainErr}` }];
+      });
+    }
+
     return runCommand(d.host, d.port, d.user, d.pass, '/system/resource/print')
       .catch(e => ({ error: e })).then(async (resObj) => {
         if (resObj && resObj.error) {
+           const cmdErr = resObj.error && resObj.error.message
+             ? resObj.error.message
+             : String(resObj.error);
+
            try {
              const auth = Buffer.from(d.user + ':' + d.pass).toString('base64');
              const r = await fetch(`http://${d.host}:${d.webPort}/rest/system/resource`, { headers: { 'Authorization': 'Basic ' + auth }});
+             if (!r.ok) {
+               return [{ _error: `API Error: ${cmdErr}` }];
+             }
              const text = await r.text();
              try {
                const j = JSON.parse(text);
                return Array.isArray(j) ? j : [j];
-             } catch (e) { return [{ _error: "Format salah" }]; }
-           } catch (e) { return [{ _error: "Koneksi ke REST API gagal" }]; }
+             } catch (_) {
+               return [{ _error: `API Error: ${cmdErr}` }];
+             }
+           } catch (eREST) {
+               return [{ _error: `API Error: ${cmdErr}` }];
+           }
         }
         return resObj;
       });
@@ -98,7 +116,7 @@ function startGlobalPoller() {
     if (sseClients.size === 0) return; // Don't poll heavily if no clients are listening
     
     try {
-      const [technitium, resources, health, pppoe, track, connectionsArray, filter, nat, mangle, logs, pingD] = await Promise.all([
+      const [technitium, resources, health, pppoe, track, connectionsArray, filter, nat, mangle, logs] = await Promise.all([
         fetchTechnitium(),
         fetchResources(),
         api('/system/health/print').catch(() => []),
@@ -108,10 +126,10 @@ function startGlobalPoller() {
         api('/ip/firewall/filter/print').catch(() => []),
         api('/ip/firewall/nat/print').catch(() => []),
         api('/ip/firewall/mangle/print').catch(() => []),
-        api('/log/print').catch(() => []),
-        fetch(`http://127.0.0.1:${process.env.PORT||3000}/api/ping/status`).then(r=>r.json()).catch(()=>({}))
+        api('/log/print').catch(() => [])
       ]);
 
+      const pingD = getPingStatus();
       const totalConnections = parseInt((track && track[0] ? track[0]['total-entries'] : '0') || '0');
       
       // Update macQueue

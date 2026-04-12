@@ -1497,6 +1497,9 @@ async function loadSnmpInterfaces() {
 
   try {
     const data = await fetch(`/api/snmp/interfaces/${key}`).then(r => r.json());
+    // Prevent race conditions: if user switched dropdown while fetching, abort this render.
+    if (sel && sel.value !== key) return;
+
     const errMsg = data.error || (data.sysinfo && data.sysinfo.error);
     if (errMsg) {
       if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#ef4444;padding:24px;">${errMsg}</td></tr>`;
@@ -1744,7 +1747,7 @@ async function loadSettings() {
       if (matchSnmp) {
         dynamicSnmpCount++;
         const sKey = matchSnmp[1];
-        snmpContainer.innerHTML += buildSnmpBlock(sKey, data[`SNMP_DEVICE_${sKey}_LABEL`], data[k], data[`SNMP_DEVICE_${sKey}_COMM`]);
+        snmpContainer.innerHTML += buildSnmpBlock(sKey, data[`SNMP_DEVICE_${sKey}_LABEL`], data[k], data[`SNMP_DEVICE_${sKey}_COMMUNITY`]);
       }
     }
 

@@ -175,4 +175,4 @@ router.get('/status', (req, res) => {
   });
 });
 
-module.exports = { router, startPingMonitor };
+module.exports = { router, startPingMonitor, getPingStatus: () => pingStatus };
